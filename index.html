@@ -209,23 +209,203 @@
           </section>
 
           <section class="view" id="view-sales">
-            <div class="page-heading"><div><span class="eyebrow">NUEVO MOVIMIENTO</span><h1>Venta o entrega SUS</h1><p>Registra una salida de inventario en pocos pasos.</p></div><span class="branch-pill"><svg><use href="#i-store"/></svg><span id="saleBranchLabel">Santa Fe</span></span></div>
+            <div class="page-heading">
+              <div>
+                <span class="eyebrow">DISPENSACIÓN & CAJA MUNICIPAL</span>
+                <h1>Venta o entrega SUS</h1>
+                <p>Terminal oficial de dispensación de medicamentos, facturación comercial y entrega gratuita del programa SUS.</p>
+              </div>
+              <span class="branch-pill">
+                <svg><use href="#i-store"/></svg>
+                <span id="saleBranchLabel">Sucursal Activa</span>
+              </span>
+            </div>
+
             <div class="sale-layout">
+              <!-- PANEL PRINCIPAL DE DISPENSACIÓN -->
               <article class="panel sale-builder">
+                <!-- SELECTOR DE MODALIDAD (NORMAL VS SUS) -->
                 <div class="type-switch" role="radiogroup" aria-label="Tipo de salida">
-                  <button class="active" data-sale-type="normal"><span>Venta normal</span><small>Cobro al paciente</small></button>
-                  <button data-sale-type="sus"><span>Entrega SUS</span><small>Sin costo</small></button>
+                  <button type="button" class="active" data-sale-type="normal">
+                    <div class="type-btn-icon normal">
+                      <svg><use href="#i-cart"/></svg>
+                    </div>
+                    <div class="type-btn-text">
+                      <span>Venta Normal</span>
+                      <small>Cobro comercial al paciente</small>
+                    </div>
+                    <span class="type-badge normal">Mostrador</span>
+                  </button>
+
+                  <button type="button" data-sale-type="sus">
+                    <div class="type-btn-icon sus">
+                      <svg><use href="#i-shield"/></svg>
+                    </div>
+                    <div class="type-btn-text">
+                      <span>Entrega SUS</span>
+                      <small>Dispensación gratuita estatal</small>
+                    </div>
+                    <span class="type-badge sus">Gratuito 100%</span>
+                  </button>
                 </div>
-                <div class="form-section"><h2>Agregar medicamento</h2><div class="sale-add-grid"><label><span>Medicamento y lote</span><select id="saleProduct"></select></label><label><span>Cantidad</span><input id="saleQuantity" type="number" min="1" value="1" /></label><button class="button primary" id="addToCart"><svg><use href="#i-plus"/></svg>Agregar</button></div></div>
+
+                <!-- DATOS DEL BENEFICIARIO SUS (Visible solo en modo SUS) -->
+                <div id="susExtraFields" class="sus-extra-fields hidden">
+                  <div class="sus-notice">
+                    <div class="sus-header-title">
+                      <span class="sus-badge">Programa SUS Bolivia</span>
+                      <strong>Registro Oficial de Paciente Beneficiario</strong>
+                    </div>
+                    <p>Dispensación de medicamentos sin costo con cargo a la cobertura de salud municipal.</p>
+                  </div>
+                  <div class="sus-form-grid">
+                    <div class="entry-form-group">
+                      <label for="susPatientName"><span>Nombre Completo del Paciente</span><span class="req">*</span></label>
+                      <div class="official-input-wrap">
+                        <svg class="official-input-icon"><use href="#i-users"/></svg>
+                        <input type="text" id="susPatientName" class="official-input" placeholder="Ej.: Juan Pérez Gutiérrez" autocomplete="off" />
+                      </div>
+                    </div>
+                    <div class="entry-form-group">
+                      <label for="susCode"><span>Cédula de Identidad / N.º SUS</span><span class="req">*</span></label>
+                      <div class="official-input-wrap">
+                        <svg class="official-input-icon"><use href="#i-shield"/></svg>
+                        <input type="text" id="susCode" class="official-input font-mono" placeholder="Ej.: 8934120 SC" autocomplete="off" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- SECCIÓN DE AGREGADO DE PRODUCTO -->
+                <div class="form-section">
+                  <div class="form-section-header">
+                    <div class="form-section-icon">
+                      <svg><use href="#i-box"/></svg>
+                    </div>
+                    <div>
+                      <h2>Agregar medicamento a la orden</h2>
+                      <p>Seleccione lote con disponibilidad según orden de vencimiento (FEFO)</p>
+                    </div>
+                  </div>
+
+                  <div class="sale-add-grid">
+                    <div class="entry-form-group product-select-group">
+                      <label for="saleProduct"><span>Medicamento y lote disponible</span><span class="req">*</span></label>
+                      <div class="official-input-wrap">
+                        <svg class="official-input-icon"><use href="#i-box"/></svg>
+                        <select id="saleProduct" class="official-input official-select"></select>
+                      </div>
+                    </div>
+
+                    <div class="entry-form-group quantity-group">
+                      <label for="saleQuantity"><span>Cantidad</span><span class="req">*</span></label>
+                      <div class="official-input-wrap">
+                        <input id="saleQuantity" type="number" min="1" value="1" class="official-input font-bold text-center" />
+                      </div>
+                    </div>
+
+                    <button type="button" class="btn-pos-add" id="addToCart">
+                      <svg><use href="#i-plus"/></svg>
+                      <span>Agregar a orden</span>
+                    </button>
+                  </div>
+
+                  <!-- Tira informativa del medicamento seleccionado -->
+                  <div class="pos-item-preview" id="posItemPreview">
+                    <div class="preview-item">
+                      <span class="preview-label">Stock en sucursal:</span>
+                      <strong class="preview-val" id="previewStock">—</strong>
+                    </div>
+                    <div class="preview-item">
+                      <span class="preview-label">Precio unitario:</span>
+                      <strong class="preview-val emerald" id="previewPrice">—</strong>
+                    </div>
+                    <div class="preview-item">
+                      <span class="preview-label">Vencimiento del lote:</span>
+                      <span class="preview-badge" id="previewExpiry">—</span>
+                    </div>
+                    <div class="preview-item">
+                      <span class="preview-label">Subtotal estimado:</span>
+                      <strong class="preview-val blue" id="previewSubtotal">—</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- LISTA DE PRODUCTOS EN LA ORDEN -->
+                <div class="pos-cart-header">
+                  <div class="cart-title-wrap">
+                    <svg><use href="#i-cart"/></svg>
+                    <h3>Medicamentos en la orden actual</h3>
+                  </div>
+                  <span class="pos-cart-count" id="cartCountLabel">0 ítems agregados</span>
+                </div>
                 <div class="cart-list" id="cartList"></div>
               </article>
+
+              <!-- PANEL LATERAL DE RESUMEN Y COBRO -->
               <aside class="panel sale-summary">
-                <span class="eyebrow">RESUMEN</span><h2 id="summaryTitle">Venta normal</h2>
-                <dl><div><dt>Productos</dt><dd id="summaryItems">0</dd></div><div><dt>Subtotal</dt><dd id="summarySubtotal">Bs 0,00</dd></div><div class="profit-row admin-only"><dt>Ganancia estimada</dt><dd id="summaryProfit">Bs 0,00</dd></div></dl>
-                <div class="total"><span>Total</span><strong id="summaryTotal">Bs 0,00</strong></div>
-                <label class="notes"><span>Observación (opcional)</span><textarea id="saleNotes" rows="3" placeholder="Ej.: receta N.º 2048"></textarea></label>
-                <button class="button primary full" id="completeSale"><svg><use href="#i-check"/></svg>Registrar movimiento</button>
-                <p class="summary-hint"><svg><use href="#i-lock"/></svg>El registro descuenta automáticamente las existencias.</p>
+                <div class="summary-header">
+                  <span class="eyebrow">RESUMEN DE CAJA</span>
+                  <h2 id="summaryTitle">Venta Normal</h2>
+                  <small class="summary-sub" id="summaryBranchSub">Comprobante oficial municipal</small>
+                </div>
+
+                <div class="summary-breakdown">
+                  <div class="summary-row">
+                    <span class="summary-label">Total unidades despachadas:</span>
+                    <strong class="summary-val" id="summaryItems">0</strong>
+                  </div>
+                  <div class="summary-row">
+                    <span class="summary-label">Subtotal de productos:</span>
+                    <strong class="summary-val" id="summarySubtotal">Bs 0,00</strong>
+                  </div>
+                  <div class="summary-row profit-row admin-only">
+                    <span class="summary-label">Margen estimado municipal:</span>
+                    <strong class="summary-val profit" id="summaryProfit">Bs 0,00</strong>
+                  </div>
+                </div>
+
+                <!-- Tarjeta de Total a Cobrar -->
+                <div class="pos-total-card" id="posTotalCard">
+                  <div class="total-label-row">
+                    <span id="posTotalLabel">TOTAL A COBRAR</span>
+                    <span class="currency-tag">BOB</span>
+                  </div>
+                  <strong id="summaryTotal" class="total-amount">Bs 0,00</strong>
+                  <small class="total-caption" id="posTotalCaption">Cobro directo al paciente</small>
+                </div>
+
+                <!-- Método de Pago Rápido (Venta Normal) -->
+                <div class="payment-method-section" id="paymentMethodSection">
+                  <label class="payment-section-title">Forma de pago</label>
+                  <div class="payment-options">
+                    <label class="pay-option">
+                      <input type="radio" name="payMethod" value="efectivo" checked />
+                      <span>💵 Efectivo</span>
+                    </label>
+                    <label class="pay-option">
+                      <input type="radio" name="payMethod" value="qr" />
+                      <span>📱 QR / Banco</span>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Observaciones -->
+                <div class="summary-notes-group">
+                  <label for="saleNotes"><span>Observaciones / N.º de Receta médica</span></label>
+                  <textarea id="saleNotes" rows="2" class="official-textarea" placeholder="Ej.: Receta médica Dr. Vargas N.º 402..."></textarea>
+                </div>
+
+                <!-- Botón de Registro de Salida -->
+                <button type="button" class="btn-pos-complete" id="completeSale">
+                  <svg width="20" height="20"><use href="#i-check"/></svg>
+                  <span>Registrar y Emitir Comprobante</span>
+                </button>
+
+                <p class="summary-hint">
+                  <svg width="15" height="15"><use href="#i-shield"/></svg>
+                  <span>El movimiento descuenta el inventario y se sincroniza en tiempo real con Supabase.</span>
+                </p>
               </aside>
             </div>
           </section>
