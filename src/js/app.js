@@ -7,6 +7,7 @@ import { checkSupabaseConnection } from "../config/supabase.js";
 import { initAuth, getCurrentUser, logout, isAdmin, isTechnician, isSeller, getRoleLabel } from "../services/authService.js";
 import { getBranches, getBranchName } from "../services/branchesService.js";
 import { showToast } from "../services/toastService.js";
+import { initSyncEngine } from "../services/syncService.js";
 
 // Importar Vistas Modulares
 import { renderLoginOverlay, updateNavbarProfile } from "../modules/auth/loginView.js";
@@ -38,12 +39,8 @@ async function initApp() {
     }
   }
 
-  // 2. Verificar Conexión con Supabase
-  const syncStatus = document.getElementById("syncStatus");
-  const conn = await checkSupabaseConnection();
-  if (syncStatus) {
-    syncStatus.textContent = conn.message;
-  }
+  // 2. Inicializar Motor de Sincronización en Tiempo Real y Conectividad
+  initSyncEngine();
 
   // 3. Cargar Sucursales según Rol del Usuario
   await populateBranchSelector();
@@ -293,6 +290,21 @@ function initGlobalEvents() {
     await loadActiveView();
   });
 
+  // Evento de sincronización y cambio de datos en tiempo real
+  let reloadTimeout = null;
+  window.addEventListener("pharmacy-data-change", () => {
+    // Evitar recargar vistas de forma disruptiva si un diálogo modal o un input de texto está activo
+    const activeDialog = document.querySelector("dialog[open]");
+    if (activeDialog) return;
+
+    if (reloadTimeout) clearTimeout(reloadTimeout);
+    reloadTimeout = setTimeout(async () => {
+      const user = getCurrentUser();
+      if (user) {
+        await loadActiveView();
+      }
+    }, 450);
+  });
 }
 
 // Iniciar aplicación

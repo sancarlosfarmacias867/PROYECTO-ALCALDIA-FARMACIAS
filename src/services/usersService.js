@@ -1,9 +1,11 @@
 /**
  * Servicio de Administración de Usuarios y Roles (Supabase PostgreSQL)
+ * Soporte Offline y Sincronización Inmediata
  */
 import { supabaseQuery } from "../config/supabase.js";
 import { getCurrentUser, getRoleLabel } from "./authService.js";
 import { showToast } from "./toastService.js";
+import { enqueueOfflineAction, notifyDataChanged } from "./syncService.js";
 
 const USERS_CACHE_KEY = "farmacias_custom_users";
 
@@ -30,7 +32,7 @@ export async function getUsers() {
       return sanitized;
     }
   } catch (err) {
-    console.error("Error al obtener usuarios de Supabase:", err);
+    console.warn("Aviso: usando usuarios en caché local por desconexión:", err);
   }
 
   try {
@@ -57,7 +59,7 @@ export async function createUser({ name, email, pin, role, branchId }) {
   if (!cleanEmail) throw new Error("Debe ingresar el correo o identificador de acceso.");
   if (!cleanPin || cleanPin.length < 4) throw new Error("La contraseña debe tener al menos 4 caracteres.");
 
-  // Verificar si ya existe en Supabase
+  // Verificar si ya existe en Supabase o en caché local
   try {
     const existing = await supabaseQuery(`app_users?email=eq.${encodeURIComponent(cleanEmail)}&select=id`);
     if (existing && existing.length > 0) {
@@ -65,6 +67,11 @@ export async function createUser({ name, email, pin, role, branchId }) {
     }
   } catch (err) {
     if (err.message.includes("ya está registrado")) throw err;
+  }
+
+  const cached = JSON.parse(localStorage.getItem(USERS_CACHE_KEY) || "[]");
+  if (cached.some((u) => u.email === cleanEmail)) {
+    throw new Error(`El usuario o correo "${cleanEmail}" ya está registrado localmente.`);
   }
 
   const userId = `U-${Date.now().toString().slice(-6)}`;
@@ -80,17 +87,20 @@ export async function createUser({ name, email, pin, role, branchId }) {
     last_access: null
   };
 
-  await supabaseQuery("app_users", {
-    method: "POST",
-    body: newUser
-  });
-
   // Sincronizar caché local inmediato
+  cached.push(newUser);
   try {
-    const cached = JSON.parse(localStorage.getItem(USERS_CACHE_KEY) || "[]");
-    cached.push(newUser);
     localStorage.setItem(USERS_CACHE_KEY, JSON.stringify(cached));
   } catch (_) {}
+
+  try {
+    await supabaseQuery("app_users", {
+      method: "POST",
+      body: newUser
+    });
+  } catch (_) {
+    enqueueOfflineAction("CREATE_USER", "app_users", "POST", newUser, userId);
+  }
 
   // Registrar en Auditoría Municipal
   try {
@@ -107,6 +117,7 @@ export async function createUser({ name, email, pin, role, branchId }) {
     });
   } catch (_) {}
 
+  notifyDataChanged("users");
   showToast("Usuario registrado", `${cleanName} fue dado de alta como ${getRoleLabel(role)} con éxito.`);
   return newUser;
 }
@@ -126,12 +137,7 @@ export async function updateUser(userId, fields) {
     payload.pin = fields.pin.trim();
   }
 
-  await supabaseQuery(`app_users?id=eq.${encodeURIComponent(userId)}`, {
-    method: "PATCH",
-    body: payload
-  });
-
-  // Actualizar caché local
+  // Actualizar caché local de inmediato
   try {
     const cached = JSON.parse(localStorage.getItem(USERS_CACHE_KEY) || "[]");
     const idx = cached.findIndex((u) => u.id === userId);
@@ -147,6 +153,22 @@ export async function updateUser(userId, fields) {
     localStorage.setItem("farmacias_san_carlos_session", JSON.stringify(updatedSelf));
   }
 
+  try {
+    await supabaseQuery(`app_users?id=eq.${encodeURIComponent(userId)}`, {
+      method: "PATCH",
+      body: payload
+    });
+  } catch (_) {
+    enqueueOfflineAction(
+      "UPDATE_USER",
+      `app_users?id=eq.${encodeURIComponent(userId)}`,
+      "PATCH",
+      payload,
+      `UPDATE_USER_${userId}`
+    );
+  }
+
+  notifyDataChanged("users");
   showToast("Usuario actualizado", "Los datos y credenciales han sido guardados correctamente.");
   return true;
 }
@@ -161,11 +183,8 @@ export async function toggleUserActive(userId, currentStatus) {
   }
 
   const newStatus = !currentStatus;
-  await supabaseQuery(`app_users?id=eq.${encodeURIComponent(userId)}`, {
-    method: "PATCH",
-    body: { active: newStatus }
-  });
 
+  // Actualizar caché local
   try {
     const cached = JSON.parse(localStorage.getItem(USERS_CACHE_KEY) || "[]");
     const idx = cached.findIndex((u) => u.id === userId);
@@ -175,6 +194,22 @@ export async function toggleUserActive(userId, currentStatus) {
     }
   } catch (_) {}
 
+  try {
+    await supabaseQuery(`app_users?id=eq.${encodeURIComponent(userId)}`, {
+      method: "PATCH",
+      body: { active: newStatus }
+    });
+  } catch (_) {
+    enqueueOfflineAction(
+      "TOGGLE_USER_ACTIVE",
+      `app_users?id=eq.${encodeURIComponent(userId)}`,
+      "PATCH",
+      { active: newStatus },
+      `TOGGLE_USER_${userId}`
+    );
+  }
+
+  notifyDataChanged("users");
   showToast(
     newStatus ? "Usuario activado" : "Usuario desactivado",
     `El funcionario ahora está ${newStatus ? "Activo" : "Inactivo"}.`
@@ -191,16 +226,28 @@ export async function deleteUser(userId) {
     throw new Error("No puede eliminar la cuenta de Administrador Principal.");
   }
 
-  await supabaseQuery(`app_users?id=eq.${encodeURIComponent(userId)}`, {
-    method: "DELETE"
-  });
-
+  // Actualizar caché local
   try {
     const cached = JSON.parse(localStorage.getItem(USERS_CACHE_KEY) || "[]");
     const filtered = cached.filter((u) => u.id !== userId);
     localStorage.setItem(USERS_CACHE_KEY, JSON.stringify(filtered));
   } catch (_) {}
 
+  try {
+    await supabaseQuery(`app_users?id=eq.${encodeURIComponent(userId)}`, {
+      method: "DELETE"
+    });
+  } catch (_) {
+    enqueueOfflineAction(
+      "DELETE_USER",
+      `app_users?id=eq.${encodeURIComponent(userId)}`,
+      "DELETE",
+      null,
+      `DELETE_USER_${userId}`
+    );
+  }
+
+  notifyDataChanged("users");
   showToast("Usuario eliminado", "El usuario ha sido retirado definitivamente del sistema.");
   return true;
 }

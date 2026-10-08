@@ -1,10 +1,15 @@
 /**
- * Servicio de Ventas y Entregas SUS
+ * Servicio de Ventas y Entregas SUS con Sincronización en la Nube y Soporte Offline
+ * Gobierno Autónomo Municipal de San Carlos
  */
 import { supabaseQuery } from "../config/supabase.js";
 import { getCurrentUser } from "./authService.js";
 import { showToast } from "./toastService.js";
-import { getExpiryStatus } from "./inventoryService.js";
+import { getExpiryStatus, getInventory } from "./inventoryService.js";
+import { enqueueOfflineAction, notifyDataChanged } from "./syncService.js";
+
+const MOVEMENTS_CACHE_KEY = "farmacias_movements_cache";
+const INVENTORY_CACHE_KEY = "farmacias_inventory_cache";
 
 export async function getMovements(branchId = "all", month = null) {
   try {
@@ -20,11 +25,34 @@ export async function getMovements(branchId = "all", month = null) {
       endpoint += `&${filters.join("&")}`;
     }
     const data = await supabaseQuery(endpoint);
-    return data || [];
+    if (data && data.length > 0) {
+      if (branchId === "all" && !month) {
+        try {
+          localStorage.setItem(MOVEMENTS_CACHE_KEY, JSON.stringify(data));
+        } catch (_) {}
+      }
+      return data;
+    }
   } catch (err) {
-    console.error("Error al obtener movimientos:", err);
-    return [];
+    console.warn("Fallo de red al consultar movimientos de Supabase, usando respaldo local:", err);
   }
+
+  // Respaldo local si no hay conexión
+  try {
+    const cached = localStorage.getItem(MOVEMENTS_CACHE_KEY);
+    if (cached) {
+      let list = JSON.parse(cached);
+      if (branchId && branchId !== "all") {
+        list = list.filter((m) => m.branch_id === branchId);
+      }
+      if (month) {
+        list = list.filter((m) => m.date.startsWith(month));
+      }
+      return list;
+    }
+  } catch (_) {}
+
+  return [];
 }
 
 export async function processSale({ branchId, type, items, patientName = "", susCode = "", notes = "" }) {
@@ -33,13 +61,13 @@ export async function processSale({ branchId, type, items, patientName = "", sus
     throw new Error("El carrito está vacío. Agregue al menos un medicamento.");
   }
 
-  // Verificar stock actual y vencimiento de cada lote
+  // 1. Obtener inventario actual (local o remoto) y verificar existencias
+  const currentInventory = await getInventory(branchId);
   for (const item of items) {
-    const freshStock = await supabaseQuery(`inventory?id=eq.${encodeURIComponent(item.inventoryId)}&select=*`);
-    if (!freshStock || freshStock.length === 0) {
+    const product = currentInventory.find((x) => x.id === item.inventoryId);
+    if (!product) {
       throw new Error(`El producto ${item.name} ya no existe en el inventario.`);
     }
-    const product = freshStock[0];
     if (product.quantity < item.quantity) {
       throw new Error(`Stock insuficiente para ${product.name} (Lote: ${product.lot}). Disponible: ${product.quantity}, solicitado: ${item.quantity}.`);
     }
@@ -98,48 +126,83 @@ export async function processSale({ branchId, type, items, patientName = "", sus
     lines: movementLines
   };
 
-  // 1. Guardar movimiento en Supabase
-  await supabaseQuery("movements", {
-    method: "POST",
-    body: movementData
-  });
-
-  // 2. Descontar stock de cada lote
-  for (const item of movementLines) {
-    const freshStock = await supabaseQuery(`inventory?id=eq.${encodeURIComponent(item.inventoryId)}&select=quantity`);
-    const currentQty = freshStock[0]?.quantity || 0;
-    const newQty = Math.max(0, currentQty - item.quantity);
-
-    await supabaseQuery(`inventory?id=eq.${encodeURIComponent(item.inventoryId)}`, {
-      method: "PATCH",
-      body: { quantity: newQty }
-    });
-  }
-
-  // 3. Registrar auditoría
+  // 2. Actualización optimista inmediata del inventario y movimientos en caché local
   try {
-    await supabaseQuery("audit_logs", {
-      method: "POST",
-      body: {
-        user_name: user?.name || "Operador",
-        user_role: user?.role || "vendedor",
-        branch_id: branchId,
-        action: isSus ? "SUS_DELIVERY" : "SALE_COMPLETED",
-        entity: "movements",
-        details: {
-          movementId,
-          type,
-          total: totalAmount,
-          patientName,
-          itemsCount: totalItemsCount
-        }
+    const allInv = JSON.parse(localStorage.getItem(INVENTORY_CACHE_KEY) || "[]");
+    for (const line of movementLines) {
+      const idx = allInv.findIndex((x) => x.id === line.inventoryId);
+      if (idx !== -1) {
+        allInv[idx].quantity = Math.max(0, (allInv[idx].quantity || 0) - line.quantity);
       }
-    });
+    }
+    localStorage.setItem(INVENTORY_CACHE_KEY, JSON.stringify(allInv));
+
+    const allMovs = JSON.parse(localStorage.getItem(MOVEMENTS_CACHE_KEY) || "[]");
+    allMovs.unshift(movementData);
+    localStorage.setItem(MOVEMENTS_CACHE_KEY, JSON.stringify(allMovs));
   } catch (_) {}
 
+  // 3. Persistir en Supabase o encolar en Outbox si falla la red
+  let savedRemotely = false;
+  try {
+    // 3.1 Insertar movimiento
+    await supabaseQuery("movements", {
+      method: "POST",
+      body: movementData
+    });
+
+    // 3.2 Descontar stock en Supabase
+    for (const item of movementLines) {
+      try {
+        const freshStock = await supabaseQuery(`inventory?id=eq.${encodeURIComponent(item.inventoryId)}&select=quantity`);
+        const currentQty = freshStock[0]?.quantity || 0;
+        const newQty = Math.max(0, currentQty - item.quantity);
+        await supabaseQuery(`inventory?id=eq.${encodeURIComponent(item.inventoryId)}`, {
+          method: "PATCH",
+          body: { quantity: newQty }
+        });
+      } catch (_) {}
+    }
+
+    // 3.3 Auditoría
+    try {
+      await supabaseQuery("audit_logs", {
+        method: "POST",
+        body: {
+          user_name: user?.name || "Operador",
+          user_role: user?.role || "vendedor",
+          branch_id: branchId,
+          action: isSus ? "SUS_DELIVERY" : "SALE_COMPLETED",
+          entity: "movements",
+          details: { movementId, type, total: totalAmount, patientName, itemsCount: totalItemsCount }
+        }
+      });
+    } catch (_) {}
+
+    savedRemotely = true;
+    notifyDataChanged("sales");
+  } catch (err) {
+    console.warn("Fallo de red al registrar venta en Supabase. Encolando para sincronización automática:", err);
+    // Encolar movimiento con clave única
+    enqueueOfflineAction("PROCESS_SALE", "movements", "POST", movementData, movementId);
+
+    // Encolar descuento de stock
+    for (const item of movementLines) {
+      enqueueOfflineAction(
+        "DEDUCT_STOCK",
+        `inventory?id=eq.${encodeURIComponent(item.inventoryId)}`,
+        "PATCH",
+        { quantity_decrement: item.quantity },
+        `STOCK-${movementId}-${item.inventoryId}`
+      );
+    }
+  }
+
   showToast(
-    isSus ? "Entrega SUS completada" : "Venta registrada con éxito",
-    `${movementId} · ${totalItemsCount} unidades · ${isSus ? "Gratuito (SUS)" : `Bs ${totalAmount.toFixed(2)}`}`
+    savedRemotely
+      ? (isSus ? "Entrega SUS completada" : "Venta registrada con éxito")
+      : "Venta guardada (Modo Fuera de Línea)",
+    `${movementId} · ${totalItemsCount} uds. · ${isSus ? "Gratuito (SUS)" : `Bs ${totalAmount.toFixed(2)}`}`
   );
 
   return movementData;
