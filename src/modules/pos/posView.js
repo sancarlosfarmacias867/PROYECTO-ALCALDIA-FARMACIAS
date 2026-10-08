@@ -14,8 +14,8 @@ export async function renderPosModule(selectedBranchId = "all") {
   const user = getCurrentUser();
   const branches = await getBranches();
   
-  // Si el usuario es vendedor, forzar a su sucursal asignada
-  const activeBranch = (user?.role === "vendedor" && user.branch_id !== "all") 
+  // Si el usuario no es admin, forzar estrictamente a su sucursal asignada
+  const activeBranch = (user?.role !== "admin" && user?.branch_id !== "all") 
     ? user.branch_id 
     : (selectedBranchId === "all" ? branches[0].id : selectedBranchId);
 
@@ -171,7 +171,7 @@ export function initPosEvents() {
 
     const user = getCurrentUser();
     const branchSelect = document.getElementById("branchSelect");
-    const activeBranch = (user?.role === "vendedor" && user.branch_id !== "all") 
+    const activeBranch = (user?.role !== "admin" && user?.branch_id !== "all") 
       ? user.branch_id 
       : (branchSelect?.value === "all" ? "san-carlos" : branchSelect?.value || "san-carlos");
 

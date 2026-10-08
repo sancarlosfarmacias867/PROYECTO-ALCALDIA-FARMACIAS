@@ -146,7 +146,7 @@
         </div>
         <nav class="nav" aria-label="Navegación principal">
           <button class="nav-item active" data-view="dashboard" data-roles="admin"><svg><use href="#i-grid"/></svg><span>Resumen</span></button>
-          <button class="nav-item" data-view="inventory" data-roles="admin,vendedor"><svg><use href="#i-box"/></svg><span>Inventario</span><b id="inventoryBadge">0</b></button>
+          <button class="nav-item" data-view="inventory" data-roles="admin,vendedor,tecnico"><svg><use href="#i-box"/></svg><span>Inventario</span><b id="inventoryBadge">0</b></button>
           <button class="nav-item" data-view="sales" data-roles="admin,vendedor"><svg><use href="#i-cart"/></svg><span>Ventas y SUS</span></button>
           <button class="nav-item" data-view="entries" data-roles="admin,tecnico"><svg><use href="#i-plus"/></svg><span>Ingresos</span></button>
           <button class="nav-item" data-view="reports" data-roles="admin"><svg><use href="#i-chart"/></svg><span>Control y reportes</span></button>
@@ -166,14 +166,6 @@
             <select id="branchSelect"></select>
           </div>
           <div class="topbar-actions">
-            <div class="demo-role">
-              <span>Vista demo:</span>
-              <select id="roleSelect" aria-label="Simular rol">
-                <option value="admin">Administradora</option>
-                <option value="tecnico">Técnico</option>
-                <option value="vendedor">Vendedor</option>
-              </select>
-            </div>
             <button class="icon-button notification-button" id="notificationButton" data-roles="admin,vendedor" aria-label="Ver alertas"><svg><use href="#i-bell"/></svg><i id="alertCount">0</i></button>
             <div class="profile"><span>MA</span><div><strong id="profileName">María Aguilera</strong><small id="profileRole">Administradora</small></div></div>
           </div>
@@ -269,7 +261,7 @@
           <section class="view" id="view-users">
             <div class="page-heading"><div><span class="eyebrow">ACCESOS DEL SISTEMA</span><h1>Usuarios y roles</h1><p>Administra quién puede ver y modificar cada módulo.</p></div><button class="button primary" id="newUserButton"><svg><use href="#i-plus"/></svg>Nuevo usuario</button></div>
             <div class="role-summary" id="roleSummary"></div>
-            <article class="panel table-panel"><div class="toolbar"><label class="search"><svg><use href="#i-search"/></svg><input id="userSearch" type="search" placeholder="Buscar usuario" /></label><span class="result-count" id="userCount"></span></div><div class="table-wrap"><table><thead><tr><th>Usuario</th><th>Rol</th><th>Sucursal asignada</th><th>Estado</th><th>Último acceso</th></tr></thead><tbody id="usersTable"></tbody></table></div></article>
+            <article class="panel table-panel"><div class="toolbar"><label class="search"><svg><use href="#i-search"/></svg><input id="userSearch" type="search" placeholder="Buscar usuario" /></label><span class="result-count" id="userCount"></span></div><div class="table-wrap"><table><thead><tr><th>Usuario</th><th>Rol</th><th>Sucursal asignada</th><th>Estado</th><th>Último acceso</th><th>Acciones</th></tr></thead><tbody id="usersTable"></tbody></table></div></article>
           </section>
         </div>
       </main>
@@ -282,9 +274,50 @@
 
     <dialog id="userDialog">
       <form method="dialog" id="userForm">
-        <div class="dialog-heading"><div><span class="eyebrow">NUEVO ACCESO</span><h2>Crear usuario</h2></div><button type="button" class="icon-button" data-close-user aria-label="Cerrar"><svg><use href="#i-close"/></svg></button></div>
-        <div class="dialog-body"><label><span>Nombre completo</span><input name="name" required placeholder="Nombre y apellido" /></label><label><span>Correo electrónico</span><input name="email" type="email" required placeholder="usuario@sancarlos.gob.bo" /></label><label><span>Rol</span><select name="role" required><option value="tecnico">Técnico</option><option value="vendedor">Vendedor</option><option value="admin">Administrador</option></select></label><label><span>Sucursal</span><select name="branch" id="userBranch" required></select></label></div>
-        <div class="dialog-actions"><button type="button" class="button secondary" data-close-user>Cancelar</button><button type="submit" class="button primary"><svg><use href="#i-check"/></svg>Crear usuario</button></div>
+        <div class="dialog-heading">
+          <div>
+            <span class="eyebrow" id="userDialogEyebrow">GESTIÓN DE PERSONAL</span>
+            <h2 id="userDialogTitle">Crear nuevo usuario</h2>
+          </div>
+          <button type="button" class="icon-button" data-close-user aria-label="Cerrar"><svg><use href="#i-close"/></svg></button>
+        </div>
+        <div class="dialog-body">
+          <input type="hidden" name="userId" id="userEditId" />
+          <label>
+            <span>Nombre completo del funcionario</span>
+            <input name="name" id="userFormName" required placeholder="Ej: Carlos Rivero" />
+          </label>
+          <label>
+            <span>Usuario o Correo Institucional</span>
+            <input name="email" id="userFormEmail" required placeholder="Ej: carlos.tecnico o carlos@sancarlos.gob.bo" />
+          </label>
+          <label>
+            <span>Contraseña / PIN de Acceso</span>
+            <input name="pin" id="userFormPin" required placeholder="Mínimo 4 caracteres (Ej: admin123)" minlength="4" />
+          </label>
+          <label>
+            <span>Rol y nivel de permisos</span>
+            <select name="role" id="userFormRole" required>
+              <option value="vendedor">Vendedor(a) / Dispensación SUS</option>
+              <option value="tecnico">Técnico Farmacéutico</option>
+              <option value="admin">Administrador General</option>
+            </select>
+          </label>
+          <label class="full-width">
+            <span>Sucursal asignada (Fijada por Administración)</span>
+            <select name="branch" id="userBranch" required></select>
+            <small style="color: var(--slate-500); font-size: 0.72rem; margin-top: 4px;">
+              El funcionario operará exclusivamente en la sucursal designada por la administración.
+            </small>
+          </label>
+        </div>
+        <div class="dialog-actions">
+          <button type="button" class="button secondary" data-close-user>Cancelar</button>
+          <button type="submit" class="button primary" id="userSubmitBtn">
+            <svg><use href="#i-check"/></svg>
+            <span id="userSubmitText">Guardar usuario</span>
+          </button>
+        </div>
       </form>
     </dialog>
 

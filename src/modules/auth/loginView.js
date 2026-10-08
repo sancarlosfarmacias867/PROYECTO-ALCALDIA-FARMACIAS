@@ -376,7 +376,6 @@ export function updateNavbarProfile() {
   const profileName = document.getElementById("profileName");
   const profileRole = document.getElementById("profileRole");
   const profileAvatar = document.querySelector(".profile span");
-  const roleSelect = document.getElementById("roleSelect");
 
   if (!user) {
     if (profileName) profileName.textContent = "Sin sesión";
@@ -387,13 +386,11 @@ export function updateNavbarProfile() {
   }
 
   if (profileName) profileName.textContent = user.name;
-  if (profileRole) profileRole.textContent = `${getRoleLabel(user.role)} · ${user.branch_id === "all" ? "Central" : user.branch_id}`;
+  const branchName = user.branch_id === "all" ? "Central" : user.branch_id.toUpperCase();
+  if (profileRole) profileRole.textContent = `${getRoleLabel(user.role)} · ${branchName}`;
   if (profileAvatar) {
-    const initials = user.name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
+    const initials = (user.name || "SC").split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
     profileAvatar.textContent = initials || "SC";
-  }
-  if (roleSelect) {
-    roleSelect.value = user.role;
   }
 
   ensureLogoutButton();

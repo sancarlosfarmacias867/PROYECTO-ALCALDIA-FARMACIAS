@@ -18,8 +18,8 @@ export async function renderInventoryModule(selectedBranchId = "all") {
   const user = getCurrentUser();
   const branches = await getBranches();
   
-  // Si es vendedor, forzar a su sucursal
-  const activeBranch = (user?.role === "vendedor" && user.branch_id !== "all") ? user.branch_id : selectedBranchId;
+  // Si no es admin, forzar estrictamente a su sucursal asignada
+  const activeBranch = (user?.role !== "admin" && user?.branch_id !== "all") ? user.branch_id : selectedBranchId;
   
   if (inventorySubtitle) {
     inventorySubtitle.textContent = activeBranch === "all" 

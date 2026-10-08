@@ -4,7 +4,7 @@
  */
 
 import { checkSupabaseConnection } from "../config/supabase.js";
-import { initAuth, getCurrentUser, switchRole, logout, isAdmin, isTechnician, isSeller, getRoleLabel } from "../services/authService.js";
+import { initAuth, getCurrentUser, logout, isAdmin, isTechnician, isSeller, getRoleLabel } from "../services/authService.js";
 import { getBranches, getBranchName } from "../services/branchesService.js";
 import { showToast } from "../services/toastService.js";
 
@@ -45,10 +45,10 @@ async function initApp() {
     syncStatus.textContent = conn.message;
   }
 
-  // 3. Cargar Sucursales en el Selector Global
+  // 3. Cargar Sucursales según Rol del Usuario
   await populateBranchSelector();
 
-  // 4. Inicializar Navegación y Vistas
+  // 4. Inicializar Navegación y Vistas con Permisos Estrictos
   initNavigation();
   applyRoleVisibility();
 
@@ -68,29 +68,49 @@ async function initApp() {
 
 async function populateBranchSelector() {
   const branchSelect = document.getElementById("branchSelect");
+  const branchLabel = document.querySelector('.context label[for="branchSelect"]');
   if (!branchSelect) return;
 
   const branches = await getBranches();
   const user = getCurrentUser();
 
-  if (user?.role === "vendedor" && user.branch_id !== "all") {
-    // Si es vendedor, solo su sucursal
-    const userBranch = branches.find((b) => b.id === user.branch_id) || branches[0];
-    branchSelect.innerHTML = `<option value="${userBranch.id}">${userBranch.name}</option>`;
-    selectedBranch = userBranch.id;
-  } else {
-    // Admin o Técnico: todas
+  if (!user) return;
+
+  if (user.role === "admin") {
+    // El Administrador ve TODO y puede elegir cualquier sucursal o el consolidado
+    branchSelect.disabled = false;
+    branchSelect.classList.remove("locked-branch");
+    if (branchLabel) branchLabel.innerHTML = "Sucursal";
+
     branchSelect.innerHTML = `
       <option value="all">Consolidado (Todas las 6)</option>
       ${branches.map((b) => `<option value="${b.id}">${b.name} (${b.code})</option>`).join("")}
     `;
     branchSelect.value = selectedBranch;
+  } else {
+    // Vendedor o Técnico: SU SUCURSAL ES FIJA, ASIGNADA POR EL ADMINISTRADOR
+    const userBranch = branches.find((b) => b.id === user.branch_id) || branches[0];
+    selectedBranch = userBranch.id;
+
+    branchSelect.innerHTML = `
+      <option value="${userBranch.id}">${userBranch.name} (${userBranch.code})</option>
+    `;
+    branchSelect.value = userBranch.id;
+    branchSelect.disabled = true;
+    branchSelect.classList.add("locked-branch");
+
+    if (branchLabel) {
+      branchLabel.innerHTML = `Sucursal Asignada 🔒`;
+      branchLabel.title = "Sucursal designada por la administración municipal";
+    }
   }
 
-  branchSelect.addEventListener("change", async (e) => {
-    selectedBranch = e.target.value;
-    await loadActiveView();
-  });
+  branchSelect.onchange = async (e) => {
+    if (user.role === "admin") {
+      selectedBranch = e.target.value;
+      await loadActiveView();
+    }
+  };
 }
 
 function initNavigation() {
@@ -115,12 +135,12 @@ async function switchView(viewName) {
   const user = getCurrentUser();
 
   // Validar permisos por rol
-  if (user?.role === "vendedor" && (viewName === "reports" || viewName === "users" || viewName === "entries")) {
+  if (user?.role === "vendedor" && viewName !== "sales" && viewName !== "inventory") {
     showToast("Acceso Restringido", "Este módulo es exclusivo para administradores o técnicos.", "warning");
     return;
   }
-  if (user?.role === "tecnico" && (viewName === "reports" || viewName === "users")) {
-    showToast("Acceso Restringido", "Este módulo es exclusivo para administración.", "warning");
+  if (user?.role === "tecnico" && viewName !== "entries" && viewName !== "inventory") {
+    showToast("Acceso Restringido", "Este módulo es exclusivo para administración o ventas.", "warning");
     return;
   }
 
@@ -186,25 +206,24 @@ function applyRoleVisibility() {
     }
   });
 
-  // Ajustar vista por defecto si el rol actual no tiene acceso a la vista activa
-  if (role === "vendedor" && (currentView === "dashboard" || currentView === "reports" || currentView === "users" || currentView === "entries")) {
-    switchView("sales");
-  } else if (role === "tecnico" && (currentView === "reports" || currentView === "users" || currentView === "sales")) {
-    switchView("entries");
+  // Redirigir a vista autorizada según rol
+  if (role === "vendedor") {
+    if (currentView !== "sales" && currentView !== "inventory") {
+      switchView("sales");
+    }
+  } else if (role === "tecnico") {
+    if (currentView !== "entries" && currentView !== "inventory") {
+      switchView("entries");
+    }
+  } else if (role === "admin") {
+    // Si estaba en vista no válida, volver a dashboard
+    if (!["dashboard", "inventory", "sales", "entries", "reports", "users"].includes(currentView)) {
+      switchView("dashboard");
+    }
   }
 }
 
 function initGlobalEvents() {
-  // Selector de Rol Rápido en Topbar
-  const roleSelect = document.getElementById("roleSelect");
-  roleSelect?.addEventListener("change", async (e) => {
-    const newRole = e.target.value;
-    switchRole(newRole);
-    updateNavbarProfile();
-    await populateBranchSelector();
-    applyRoleVisibility();
-    await loadActiveView();
-  });
 
   // Click en Perfil para abrir Login / Switch
   document.querySelector(".profile")?.addEventListener("click", () => {

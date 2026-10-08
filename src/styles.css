@@ -310,6 +310,17 @@ svg {
   font-weight: 700;
   font-size: 0.85rem;
   cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+#branchSelect.locked-branch {
+  background: var(--slate-100) !important;
+  color: var(--slate-700) !important;
+  border-color: var(--slate-300) !important;
+  cursor: not-allowed !important;
+  opacity: 0.95;
+  box-shadow: none !important;
+  font-weight: 800;
 }
 
 .topbar-actions {
@@ -317,31 +328,6 @@ svg {
   display: flex;
   align-items: center;
   gap: 16px;
-}
-
-.demo-role {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--slate-100);
-  border-radius: var(--radius-md);
-  padding: 6px 12px;
-}
-
-.demo-role span {
-  font-size: 0.72rem;
-  color: var(--slate-500);
-  font-weight: 600;
-}
-
-.demo-role select {
-  background: transparent;
-  border: 0;
-  color: var(--slate-800);
-  font-weight: 700;
-  font-size: 0.8rem;
-  outline: none;
-  cursor: pointer;
 }
 
 .icon-button {
@@ -1761,6 +1747,24 @@ html.logged-out .login-overlay,
   height: 6px;
   border-radius: 50%;
   background: currentColor;
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.edit-user-btn {
+  color: var(--primary-700);
+  border-color: var(--primary-200);
+}
+
+.edit-user-btn:hover {
+  background: var(--primary-50);
+  color: var(--primary-900);
+  border-color: var(--primary-400);
+  transform: translateY(-1px);
 }
 
 /* =========================================================

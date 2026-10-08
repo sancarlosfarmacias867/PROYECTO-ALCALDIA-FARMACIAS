@@ -22,11 +22,13 @@ export const DEFAULT_USERS = [
 
 export function initAuth() {
   try {
-    const saved = localStorage.getItem(AUTH_KEY);
-    if (saved) {
-      currentUser = JSON.parse(saved);
-    } else {
-      currentUser = null;
+    if (typeof localStorage !== "undefined") {
+      const saved = localStorage.getItem(AUTH_KEY);
+      if (saved) {
+        currentUser = JSON.parse(saved);
+      } else {
+        currentUser = null;
+      }
     }
   } catch (e) {
     currentUser = null;
@@ -39,83 +41,126 @@ export function getCurrentUser() {
 }
 
 export async function login(identifier, pin) {
-  const cleanId = identifier.trim().toLowerCase();
-  const cleanPin = pin.trim();
+  const cleanId = (identifier || "").trim().toLowerCase();
+  const cleanPin = (pin || "").trim();
 
-  try {
-    // Buscar por email o id en Supabase
-    let query = `app_users?email=eq.${encodeURIComponent(cleanId)}&select=*`;
-    let users = await supabaseQuery(query);
-
-    // Si no encuentra por email exacto y buscó "admin", buscar también "admin@sancarlos.gob.bo"
-    if ((!users || users.length === 0) && cleanId === "admin") {
-      users = await supabaseQuery(`app_users?email=eq.admin@sancarlos.gob.bo&select=*`);
-    }
-
-    if (users && users.length > 0) {
-      const user = users[0];
-      if (!user.active) {
-        throw new Error("Este usuario se encuentra desactivado. Comuníquese con administración.");
-      }
-      if (user.pin && user.pin !== cleanPin) {
-        throw new Error("Contraseña o PIN incorrecto. Intente nuevamente.");
-      }
-
-      // Actualizar último acceso en Supabase
-      try {
-        await supabaseQuery(`app_users?id=eq.${user.id}`, {
-          method: "PATCH",
-          body: { last_access: new Date().toISOString() }
-        });
-      } catch (_) {}
-
-      currentUser = user;
-      localStorage.setItem(AUTH_KEY, JSON.stringify(user));
-      window.dispatchEvent(new CustomEvent("pharmacy-auth-change", { detail: { user } }));
-      showToast("Bienvenido al Sistema", `${user.name} (${getRoleLabel(user.role)})`);
-      return user;
-    }
-  } catch (err) {
-    if (err.message.includes("desactivado") || err.message.includes("Contraseña") || err.message.includes("PIN")) {
-      throw err;
-    }
-    console.warn("Fallo consulta Supabase, verificando respaldo local:", err);
+  if (!cleanId || !cleanPin) {
+    throw new Error("Debe ingresar su usuario institucional y contraseña.");
   }
 
-  // Fallback a usuarios locales por defecto
-  const fallback = DEFAULT_USERS.find(
-    (u) => u.email.toLowerCase() === cleanId || (cleanId === "admin" && u.role === "admin")
-  );
+  try {
+    // 1. Consultar usuarios en Supabase
+    let users = await supabaseQuery("app_users?select=*");
+
+    if (users && users.length > 0) {
+      // Guardar respaldo en caché
+      try {
+        if (typeof localStorage !== "undefined") {
+          localStorage.setItem("farmacias_custom_users", JSON.stringify(users));
+        }
+      } catch (_) {}
+
+      // Búsqueda inteligente (email, usuario sin dominio, nombre o admin)
+      const matched = users.find((u) => {
+        const uEmail = (u.email || "").toLowerCase();
+        const uName = (u.name || "").toLowerCase();
+        if (uEmail === cleanId) return true;
+        if (uEmail.split("@")[0] === cleanId) return true;
+        if (cleanId === "admin" && (uEmail === "admin" || u.role === "admin")) return true;
+        if (uName === cleanId) return true;
+        return false;
+      });
+
+      if (matched) {
+        if (!matched.active) {
+          throw new Error("Este usuario se encuentra desactivado. Comuníquese con la administración municipal.");
+        }
+        if (matched.pin && matched.pin !== cleanPin) {
+          throw new Error("Contraseña incorrecta. Verifique sus credenciales.");
+        }
+
+        // Actualizar último acceso en Supabase
+        try {
+          await supabaseQuery(`app_users?id=eq.${encodeURIComponent(matched.id)}`, {
+            method: "PATCH",
+            body: { last_access: new Date().toISOString() }
+          });
+        } catch (_) {}
+
+        currentUser = matched;
+        if (typeof localStorage !== "undefined") {
+          localStorage.setItem(AUTH_KEY, JSON.stringify(matched));
+        }
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("pharmacy-auth-change", { detail: { user: matched } }));
+        }
+        showToast("Bienvenido al Sistema", `${matched.name} (${getRoleLabel(matched.role)})`);
+        return matched;
+      }
+    }
+  } catch (err) {
+    if (
+      err.message.includes("desactivado") ||
+      err.message.includes("Contraseña") ||
+      err.message.includes("PIN") ||
+      err.message.includes("credenciales")
+    ) {
+      throw err;
+    }
+    console.warn("Fallo temporal Supabase, verificando respaldo local:", err);
+  }
+
+  // 2. Fallback de respaldo (Caché local sincronizada + DEFAULT_USERS)
+  let allLocalUsers = [...DEFAULT_USERS];
+  try {
+    if (typeof localStorage !== "undefined") {
+      const cached = JSON.parse(localStorage.getItem("farmacias_custom_users") || "[]");
+      if (cached.length > 0) {
+        allLocalUsers = cached;
+      }
+    }
+  } catch (_) {}
+
+  const fallback = allLocalUsers.find((u) => {
+    const uEmail = (u.email || "").toLowerCase();
+    const uName = (u.name || "").toLowerCase();
+    return (
+      uEmail === cleanId ||
+      uEmail.split("@")[0] === cleanId ||
+      uName === cleanId ||
+      (cleanId === "admin" && u.role === "admin")
+    );
+  });
 
   if (fallback) {
+    if (!fallback.active) {
+      throw new Error("Este usuario se encuentra desactivado. Comuníquese con la administración municipal.");
+    }
     if (fallback.pin !== cleanPin) {
-      throw new Error("Contraseña o PIN incorrecto. Intente nuevamente.");
+      throw new Error("Contraseña incorrecta. Verifique sus credenciales.");
     }
     currentUser = fallback;
-    localStorage.setItem(AUTH_KEY, JSON.stringify(fallback));
-    window.dispatchEvent(new CustomEvent("pharmacy-auth-change", { detail: { user: fallback } }));
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem(AUTH_KEY, JSON.stringify(fallback));
+    }
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("pharmacy-auth-change", { detail: { user: fallback } }));
+    }
     showToast("Bienvenido al Sistema", `${fallback.name} (${getRoleLabel(fallback.role)})`);
     return fallback;
   }
 
-  throw new Error("Usuario no encontrado en el sistema.");
-}
-
-export function switchRole(role, branchId = "all") {
-  let user = DEFAULT_USERS.find((u) => u.role === role);
-  if (!user) user = { ...DEFAULT_USERS[0], role, branch_id: branchId };
-  if (branchId !== "all") user.branch_id = branchId;
-  currentUser = user;
-  localStorage.setItem(AUTH_KEY, JSON.stringify(user));
-  window.dispatchEvent(new CustomEvent("pharmacy-auth-change", { detail: { user } }));
-  showToast("Rol cambiado", `Ahora estás en modo ${getRoleLabel(role)}`);
-  return user;
+  throw new Error("Usuario no encontrado en la base de datos municipal.");
 }
 
 export function logout() {
-  localStorage.removeItem(AUTH_KEY);
+  if (typeof localStorage !== "undefined") {
+    localStorage.removeItem(AUTH_KEY);
+  }
   currentUser = null;
-  window.dispatchEvent(new CustomEvent("pharmacy-auth-change", { detail: { user: null } }));
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("pharmacy-auth-change", { detail: { user: null } }));
+  }
   showToast("Sesión cerrada", "Has salido del sistema de farmacias.", "info");
 }
 

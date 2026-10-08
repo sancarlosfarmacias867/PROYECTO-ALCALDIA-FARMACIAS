@@ -3,6 +3,7 @@
  */
 
 export function showToast(title, message, type = "success") {
+  if (typeof document === "undefined") return;
   const toast = document.getElementById("toast");
   if (!toast) return;
 

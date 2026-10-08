@@ -1,39 +1,67 @@
 /**
- * Servicio de Administración de Usuarios y Roles
+ * Servicio de Administración de Usuarios y Roles (Supabase PostgreSQL)
  */
 import { supabaseQuery } from "../config/supabase.js";
-import { getCurrentUser } from "./authService.js";
+import { getCurrentUser, getRoleLabel } from "./authService.js";
 import { showToast } from "./toastService.js";
+
+const USERS_CACHE_KEY = "farmacias_custom_users";
 
 export async function getUsers() {
   try {
     const data = await supabaseQuery("app_users?select=*&order=name.asc");
-    return data || [];
+    if (data && data.length > 0) {
+      try {
+        localStorage.setItem(USERS_CACHE_KEY, JSON.stringify(data));
+      } catch (_) {}
+      return data;
+    }
   } catch (err) {
     console.error("Error al obtener usuarios de Supabase:", err);
-    return [];
   }
+
+  try {
+    const cached = localStorage.getItem(USERS_CACHE_KEY);
+    if (cached) return JSON.parse(cached);
+  } catch (_) {}
+  return [];
 }
 
-export async function createUser({ name, email, pin = "1234", role, branchId }) {
+export async function createUser({ name, email, pin, role, branchId }) {
   const currentUser = getCurrentUser();
   if (currentUser?.role !== "admin") {
     throw new Error("Solo los administradores pueden crear nuevos usuarios.");
   }
 
-  const cleanEmail = email.trim().toLowerCase();
-  const cleanName = name.trim();
-  const userId = `U-${Date.now().toString().slice(-4)}`;
+  const cleanName = (name || "").trim();
+  const cleanEmail = (email || "").trim().toLowerCase();
+  const cleanPin = (pin || "").trim();
+
+  if (!cleanName) throw new Error("Debe ingresar el nombre completo del funcionario.");
+  if (!cleanEmail) throw new Error("Debe ingresar el correo o identificador de acceso.");
+  if (!cleanPin || cleanPin.length < 4) throw new Error("La contraseña debe tener al menos 4 caracteres.");
+
+  // Verificar si ya existe en Supabase
+  try {
+    const existing = await supabaseQuery(`app_users?email=eq.${encodeURIComponent(cleanEmail)}&select=id`);
+    if (existing && existing.length > 0) {
+      throw new Error(`El usuario o correo "${cleanEmail}" ya está registrado en el sistema.`);
+    }
+  } catch (err) {
+    if (err.message.includes("ya está registrado")) throw err;
+  }
+
+  const userId = `U-${Date.now().toString().slice(-6)}`;
 
   const newUser = {
     id: userId,
     name: cleanName,
     email: cleanEmail,
-    pin: pin || "1234",
-    role,
-    branch_id: branchId,
+    pin: cleanPin,
+    role: role || "vendedor",
+    branch_id: branchId || "san-carlos",
     active: true,
-    last_access: new Date().toISOString()
+    last_access: null
   };
 
   await supabaseQuery("app_users", {
@@ -41,14 +69,21 @@ export async function createUser({ name, email, pin = "1234", role, branchId }) 
     body: newUser
   });
 
-  // Auditoría
+  // Sincronizar caché local inmediato
+  try {
+    const cached = JSON.parse(localStorage.getItem(USERS_CACHE_KEY) || "[]");
+    cached.push(newUser);
+    localStorage.setItem(USERS_CACHE_KEY, JSON.stringify(cached));
+  } catch (_) {}
+
+  // Registrar en Auditoría Municipal
   try {
     await supabaseQuery("audit_logs", {
       method: "POST",
       body: {
         user_name: currentUser.name,
         user_role: currentUser.role,
-        branch_id: branchId,
+        branch_id: branchId || "all",
         action: "CREATE_USER",
         entity: "app_users",
         details: { userId, name: cleanName, email: cleanEmail, role, branchId }
@@ -56,7 +91,7 @@ export async function createUser({ name, email, pin = "1234", role, branchId }) 
     });
   } catch (_) {}
 
-  showToast("Usuario creado", `${cleanName} ha sido registrado como ${role}.`);
+  showToast("Usuario registrado", `${cleanName} fue dado de alta como ${getRoleLabel(role)} con éxito.`);
   return newUser;
 }
 
@@ -66,12 +101,37 @@ export async function updateUser(userId, fields) {
     throw new Error("Solo los administradores pueden modificar usuarios.");
   }
 
+  const payload = {};
+  if (fields.name) payload.name = fields.name.trim();
+  if (fields.email) payload.email = fields.email.trim().toLowerCase();
+  if (fields.role) payload.role = fields.role;
+  if (fields.branch_id) payload.branch_id = fields.branch_id;
+  if (fields.pin && fields.pin.trim().length >= 4) {
+    payload.pin = fields.pin.trim();
+  }
+
   await supabaseQuery(`app_users?id=eq.${encodeURIComponent(userId)}`, {
     method: "PATCH",
-    body: fields
+    body: payload
   });
 
-  showToast("Usuario actualizado", "Los datos del usuario han sido actualizados en Supabase.");
+  // Actualizar caché local
+  try {
+    const cached = JSON.parse(localStorage.getItem(USERS_CACHE_KEY) || "[]");
+    const idx = cached.findIndex((u) => u.id === userId);
+    if (idx !== -1) {
+      cached[idx] = { ...cached[idx], ...payload };
+      localStorage.setItem(USERS_CACHE_KEY, JSON.stringify(cached));
+    }
+  } catch (_) {}
+
+  // Si el usuario editado es el actual, refrescar sesión activa
+  if (currentUser.id === userId) {
+    const updatedSelf = { ...currentUser, ...payload };
+    localStorage.setItem("farmacias_san_carlos_session", JSON.stringify(updatedSelf));
+  }
+
+  showToast("Usuario actualizado", "Los datos y credenciales han sido guardados correctamente.");
   return true;
 }
 
@@ -80,6 +140,9 @@ export async function toggleUserActive(userId, currentStatus) {
   if (currentUser?.role !== "admin") {
     throw new Error("Solo los administradores pueden activar o desactivar usuarios.");
   }
+  if (userId === currentUser.id && currentStatus) {
+    throw new Error("No puede desactivar su propia cuenta activa de administrador.");
+  }
 
   const newStatus = !currentStatus;
   await supabaseQuery(`app_users?id=eq.${encodeURIComponent(userId)}`, {
@@ -87,9 +150,18 @@ export async function toggleUserActive(userId, currentStatus) {
     body: { active: newStatus }
   });
 
+  try {
+    const cached = JSON.parse(localStorage.getItem(USERS_CACHE_KEY) || "[]");
+    const idx = cached.findIndex((u) => u.id === userId);
+    if (idx !== -1) {
+      cached[idx].active = newStatus;
+      localStorage.setItem(USERS_CACHE_KEY, JSON.stringify(cached));
+    }
+  } catch (_) {}
+
   showToast(
     newStatus ? "Usuario activado" : "Usuario desactivado",
-    `El usuario ahora está ${newStatus ? "Activo" : "Inactivo"}.`
+    `El funcionario ahora está ${newStatus ? "Activo" : "Inactivo"}.`
   );
   return newStatus;
 }
@@ -99,14 +171,20 @@ export async function deleteUser(userId) {
   if (currentUser?.role !== "admin") {
     throw new Error("Solo los administradores pueden eliminar usuarios.");
   }
-  if (userId === currentUser.id) {
-    throw new Error("No puedes eliminar tu propia cuenta de administrador.");
+  if (userId === currentUser.id || userId === "U-ADMIN") {
+    throw new Error("No puede eliminar la cuenta de Administrador Principal.");
   }
 
   await supabaseQuery(`app_users?id=eq.${encodeURIComponent(userId)}`, {
     method: "DELETE"
   });
 
-  showToast("Usuario eliminado", "El usuario ha sido retirado del sistema.");
+  try {
+    const cached = JSON.parse(localStorage.getItem(USERS_CACHE_KEY) || "[]");
+    const filtered = cached.filter((u) => u.id !== userId);
+    localStorage.setItem(USERS_CACHE_KEY, JSON.stringify(filtered));
+  } catch (_) {}
+
+  showToast("Usuario eliminado", "El usuario ha sido retirado definitivamente del sistema.");
   return true;
 }

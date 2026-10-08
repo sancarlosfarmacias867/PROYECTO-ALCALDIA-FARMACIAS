@@ -12,14 +12,27 @@ export async function renderRestockModule(selectedBranchId = "all") {
   const branches = await getBranches();
   const user = getCurrentUser();
 
+  const isRestricted = user?.role !== "admin" && user?.branch_id !== "all";
+  const targetBranch = isRestricted ? user.branch_id : selectedBranchId;
+
   if (branchSelect) {
-    branchSelect.innerHTML = branches
-      .map((b) => `<option value="${b.id}" ${b.id === selectedBranchId ? "selected" : ""}>${b.name} (${b.code})</option>`)
-      .join("");
+    if (isRestricted) {
+      const userBranch = branches.find((b) => b.id === user.branch_id) || branches[0];
+      branchSelect.innerHTML = `<option value="${userBranch.id}">${userBranch.name} (${userBranch.code})</option>`;
+      branchSelect.value = userBranch.id;
+      branchSelect.disabled = true;
+    } else {
+      branchSelect.disabled = false;
+      branchSelect.innerHTML = branches
+        .map((b) => `<option value="${b.id}" ${b.id === selectedBranchId ? "selected" : ""}>${b.name} (${b.code})</option>`)
+        .join("");
+    }
   }
 
   if (branchLabel) {
-    branchLabel.textContent = selectedBranchId === "all" ? "Todas las sucursales" : getBranchName(selectedBranchId, branches);
+    branchLabel.textContent = isRestricted 
+      ? getBranchName(user.branch_id, branches)
+      : (selectedBranchId === "all" ? "Todas las sucursales" : getBranchName(selectedBranchId, branches));
   }
 
   // Establecer fecha de hoy en el formulario si está vacío
@@ -44,10 +57,11 @@ export function initRestockEvents() {
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const formData = new FormData(form);
+    const user = getCurrentUser();
     
     const name = formData.get("name");
     const lot = formData.get("lot");
-    const branchId = formData.get("branch");
+    const branchId = (user?.role !== "admin" && user?.branch_id !== "all") ? user.branch_id : formData.get("branch");
     const quantity = formData.get("quantity");
     const unitCost = formData.get("unitCost");
     const margin = formData.get("margin") || 30;
