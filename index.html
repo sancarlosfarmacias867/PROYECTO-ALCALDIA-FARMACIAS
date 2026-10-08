@@ -231,23 +231,323 @@
           </section>
 
           <section class="view" id="view-entries">
-            <div class="page-heading"><div><span class="eyebrow">ABASTECIMIENTO</span><h1>Ingreso de medicamentos</h1><p>Registra un lote nuevo con trazabilidad completa.</p></div><span class="branch-pill"><svg><use href="#i-store"/></svg><span id="entryBranchLabel">Todas las sucursales</span></span></div>
-            <article class="panel form-card">
-              <form id="entryForm">
-                <div class="form-title"><span class="form-icon"><svg><use href="#i-box"/></svg></span><div><h2>Datos del lote</h2><p>Todos los campos son obligatorios.</p></div></div>
-                <div class="form-grid">
-                  <label><span>Nombre del medicamento</span><input name="name" required placeholder="Ej.: Paracetamol 500 mg" /></label>
-                  <label><span>Número de lote</span><input name="lot" required placeholder="Ej.: PCM-2408" /></label>
-                  <label><span>Sucursal</span><select name="branch" id="entryBranch" required></select></label>
-                  <label><span>Cantidad de ingreso</span><input name="quantity" type="number" min="1" required placeholder="0" /></label>
-                  <label><span>Precio unitario (Bs)</span><input name="unitCost" type="number" min="0" step="0.01" required placeholder="0,00" /></label>
-                  <label class="admin-only"><span>Margen de ganancia (%)</span><input name="margin" type="number" min="0" step="0.01" value="30" required /></label>
-                  <div class="technician-only pricing-pending-note"><span><svg><use href="#i-lock"/></svg></span><div><strong>Precio protegido</strong><small>Administración definirá el porcentaje de ganancia antes de habilitar la venta.</small></div></div>
-                  <label><span>Fecha de ingreso</span><input name="entryDate" type="date" required /></label>
-                  <label><span>Fecha de vencimiento</span><input name="expiry" type="date" required /></label>
+            <div class="page-heading">
+              <div>
+                <span class="eyebrow">ABASTECIMIENTO & LOGÍSTICA</span>
+                <h1>Ingreso de medicamentos</h1>
+                <p>Recepción oficial de lotes, registro de costos y abastecimiento para la red municipal de farmacias.</p>
+              </div>
+              <span class="branch-pill">
+                <svg><use href="#i-store"/></svg>
+                <span id="entryBranchLabel">Todas las sucursales</span>
+              </span>
+            </div>
+
+            <!-- KPI Cards de Ingresos -->
+            <div class="entries-kpi-grid">
+              <div class="entry-kpi-card">
+                <div class="entry-kpi-icon emerald">
+                  <svg><use href="#i-box"/></svg>
                 </div>
-                <div class="form-actions"><button type="reset" class="button secondary">Limpiar</button><button type="submit" class="button primary"><svg><use href="#i-check"/></svg>Guardar en inventario</button></div>
+                <div class="entry-kpi-details">
+                  <span class="entry-kpi-label">Lotes Registrados</span>
+                  <strong class="entry-kpi-val" id="kpiTotalEntries">0</strong>
+                  <small class="entry-kpi-sub">Total de recepciones</small>
+                </div>
+              </div>
+
+              <div class="entry-kpi-card">
+                <div class="entry-kpi-icon blue">
+                  <svg><use href="#i-chart"/></svg>
+                </div>
+                <div class="entry-kpi-details">
+                  <span class="entry-kpi-label">Inversión en Compras</span>
+                  <strong class="entry-kpi-val" id="kpiTotalInvestment">Bs 0.00</strong>
+                  <small class="entry-kpi-sub">Costo acumulado lotes</small>
+                </div>
+              </div>
+
+              <div class="entry-kpi-card">
+                <div class="entry-kpi-icon amber">
+                  <svg><use href="#i-store"/></svg>
+                </div>
+                <div class="entry-kpi-details">
+                  <span class="entry-kpi-label">Puntos Abastecidos</span>
+                  <strong class="entry-kpi-val" id="kpiBranchesSupplied">6</strong>
+                  <small class="entry-kpi-sub">Farmacias municipales</small>
+                </div>
+              </div>
+
+              <div class="entry-kpi-card">
+                <div class="entry-kpi-icon purple">
+                  <svg><use href="#i-check"/></svg>
+                </div>
+                <div class="entry-kpi-details">
+                  <span class="entry-kpi-label">Último Ingreso</span>
+                  <strong class="entry-kpi-val" id="kpiLastEntryDate">—</strong>
+                  <small class="entry-kpi-sub" id="kpiLastEntryMedicine">Sin movimientos hoy</small>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tarjeta Principal del Formulario -->
+            <article class="panel entry-main-card">
+              <div class="entry-card-header">
+                <div class="entry-header-left">
+                  <div class="entry-header-icon">
+                    <svg><use href="#i-box"/></svg>
+                  </div>
+                  <div>
+                    <h2>Registro de Lote y Abastecimiento</h2>
+                    <p>Complete los datos del lote para actualizar el inventario y habilitar la dispensación municipal.</p>
+                  </div>
+                </div>
+                <div class="entry-header-badge">
+                  <svg width="14" height="14"><use href="#i-shield"/></svg>
+                  <span>Protocolo Municipal Oficial</span>
+                </div>
+              </div>
+
+              <form id="entryForm" class="entry-form-body">
+                <!-- SECCIÓN 1: Identificación y Destino -->
+                <div class="entry-section">
+                  <div class="section-title-wrap">
+                    <span class="section-number">1</span>
+                    <h3>Identificación del Producto y Destino</h3>
+                  </div>
+                  <div class="entry-grid-3">
+                    <div class="entry-form-group">
+                      <label for="entryName">
+                        <span>Nombre del medicamento</span>
+                        <span class="req">*</span>
+                      </label>
+                      <div class="official-input-wrap">
+                        <svg class="official-input-icon"><use href="#i-box"/></svg>
+                        <input id="entryName" name="name" class="official-input" required placeholder="Ej.: Paracetamol 500 mg" autocomplete="off" />
+                      </div>
+                      <small class="field-hint">Nombre genérico y presentación comercial</small>
+                    </div>
+
+                    <div class="entry-form-group">
+                      <label for="entryLot">
+                        <span>Número de lote</span>
+                        <span class="req">*</span>
+                      </label>
+                      <div class="official-input-wrap">
+                        <svg class="official-input-icon"><use href="#i-shield"/></svg>
+                        <input id="entryLot" name="lot" class="official-input font-mono" required placeholder="Ej.: PCM-2408" autocomplete="off" />
+                      </div>
+                      <small class="field-hint">Código único impreso en el envase</small>
+                    </div>
+
+                    <div class="entry-form-group">
+                      <label for="entryBranch">
+                        <span>Farmacia receptora</span>
+                        <span class="req">*</span>
+                      </label>
+                      <div class="official-input-wrap">
+                        <svg class="official-input-icon"><use href="#i-store"/></svg>
+                        <select id="entryBranch" name="branch" class="official-input official-select" required></select>
+                      </div>
+                      <small class="field-hint" id="entryBranchHint">Sucursal donde ingresará el lote</small>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- SECCIÓN 2: Cantidades, Costos y Precios -->
+                <div class="entry-section">
+                  <div class="section-title-wrap">
+                    <span class="section-number">2</span>
+                    <h3>Volumen, Costos y Parámetros Financieros</h3>
+                  </div>
+                  <div class="entry-grid-pricing">
+                    <div class="pricing-inputs-col">
+                      <div class="entry-grid-2">
+                        <div class="entry-form-group">
+                          <label for="entryQuantity">
+                            <span>Cantidad recibida (Unidades)</span>
+                            <span class="req">*</span>
+                          </label>
+                          <div class="official-input-wrap">
+                            <svg class="official-input-icon"><use href="#i-cart"/></svg>
+                            <input id="entryQuantity" name="quantity" type="number" min="1" step="1" class="official-input font-bold" required placeholder="0" />
+                          </div>
+                          <small class="field-hint">Cantidad total de unidades físicas</small>
+                        </div>
+
+                        <div class="entry-form-group">
+                          <label for="entryCost">
+                            <span>Costo unitario de compra (Bs)</span>
+                            <span class="req">*</span>
+                          </label>
+                          <div class="official-input-wrap">
+                            <svg class="official-input-icon"><use href="#i-chart"/></svg>
+                            <input id="entryCost" name="unitCost" type="number" min="0" step="0.01" class="official-input font-bold" required placeholder="0.00" />
+                          </div>
+                          <small class="field-hint">Costo de compra al distribuidor</small>
+                        </div>
+                      </div>
+
+                      <div class="entry-form-group admin-only" id="entryMarginGroup">
+                        <label for="entryMargin">
+                          <span>Margen de ganancia municipal (%)</span>
+                          <span class="req">*</span>
+                        </label>
+                        <div class="official-input-wrap">
+                          <svg class="official-input-icon"><use href="#i-crown"/></svg>
+                          <input id="entryMargin" name="margin" type="number" min="0" step="0.1" value="30" class="official-input" required />
+                        </div>
+                        <small class="field-hint">Margen oficial de sostenibilidad municipal (ej. 30%)</small>
+                      </div>
+
+                      <div class="technician-only pricing-pending-note">
+                        <div class="note-icon-pill">
+                          <svg><use href="#i-lock"/></svg>
+                        </div>
+                        <div class="note-content">
+                          <strong>Precio fijado por Administración</strong>
+                          <p>Como técnico o encargado de almacén, ingresa el stock recibido y el costo. La Administración confirmará o ajustará el precio público de venta antes de su dispensación.</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Tarjeta interactiva de cálculo en vivo -->
+                    <div class="live-calc-card" id="liveCalcCard">
+                      <div class="calc-card-header">
+                        <div class="calc-badge">
+                          <span class="pulse-indicator"></span>
+                          <span>Cálculo Financiero en Vivo</span>
+                        </div>
+                      </div>
+                      <div class="calc-card-body">
+                        <div class="calc-metric-row">
+                          <span class="calc-metric-label">Inversión total lote:</span>
+                          <strong class="calc-metric-val emerald" id="liveTotalCost">Bs 0.00</strong>
+                        </div>
+                        <div class="calc-metric-row">
+                          <span class="calc-metric-label">Precio venta estimado:</span>
+                          <strong class="calc-metric-val blue" id="liveSalePrice">Bs 0.00</strong>
+                        </div>
+                        <div class="calc-metric-row small">
+                          <span class="calc-metric-label">Margen por unidad:</span>
+                          <span class="calc-metric-val gray" id="liveProfitUnit">Bs 0.00</span>
+                        </div>
+                      </div>
+                      <div class="calc-card-footer">
+                        <small>Los importes se recalculan en tiempo real según cantidad, costo y margen fijado.</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- SECCIÓN 3: Fechas, Proveedor y Documentación -->
+                <div class="entry-section">
+                  <div class="section-title-wrap">
+                    <span class="section-number">3</span>
+                    <h3>Fechas de Control, Vencimiento y Proveedor</h3>
+                  </div>
+                  <div class="entry-grid-4">
+                    <div class="entry-form-group">
+                      <label for="entryDate">
+                        <span>Fecha de ingreso</span>
+                        <span class="req">*</span>
+                      </label>
+                      <div class="official-input-wrap">
+                        <input id="entryDate" name="entryDate" type="date" class="official-input" required />
+                      </div>
+                      <small class="field-hint">Fecha de recepción física</small>
+                    </div>
+
+                    <div class="entry-form-group">
+                      <label for="entryExpiry">
+                        <span>Fecha de vencimiento</span>
+                        <span class="req">*</span>
+                      </label>
+                      <div class="official-input-wrap">
+                        <input id="entryExpiry" name="expiry" type="date" class="official-input" required />
+                      </div>
+                      <div id="expiryFeedback" class="expiry-feedback-badge">Seleccione fecha</div>
+                    </div>
+
+                    <div class="entry-form-group">
+                      <label for="entrySupplier">
+                        <span>Proveedor / Laboratorio</span>
+                      </label>
+                      <div class="official-input-wrap">
+                        <svg class="official-input-icon"><use href="#i-store"/></svg>
+                        <input id="entrySupplier" name="supplier" class="official-input" value="Distribuidora Municipal Central" placeholder="Distribuidora o laboratorio" />
+                      </div>
+                      <small class="field-hint">Origen o distribuidor del medicamento</small>
+                    </div>
+
+                    <div class="entry-form-group">
+                      <label for="entryInvoice">
+                        <span>N.º Factura o Remisión</span>
+                      </label>
+                      <div class="official-input-wrap">
+                        <svg class="official-input-icon"><use href="#i-download"/></svg>
+                        <input id="entryInvoice" name="invoiceNumber" class="official-input font-mono" placeholder="Ej.: FAC-2026-894" />
+                      </div>
+                      <small class="field-hint">Para control contable y auditoría</small>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- FOOTER DE ACCIONES -->
+                <div class="entry-form-footer">
+                  <button type="reset" class="btn-entry-reset" id="btnResetEntry">
+                    <svg width="16" height="16"><use href="#i-close"/></svg>
+                    <span>Limpiar formulario</span>
+                  </button>
+                  <button type="submit" class="btn-entry-submit" id="btnSubmitEntry">
+                    <svg width="18" height="18"><use href="#i-check"/></svg>
+                    <span>Guardar e Ingresar a Inventario</span>
+                  </button>
+                </div>
               </form>
+            </article>
+
+            <!-- PANEL DE HISTORIAL RECIENTE -->
+            <article class="panel entry-history-panel">
+              <div class="history-panel-header">
+                <div class="history-header-title">
+                  <div class="history-icon-badge">
+                    <svg width="16" height="16"><use href="#i-grid"/></svg>
+                  </div>
+                  <div>
+                    <h3>Historial de Ingresos y Recepciones</h3>
+                    <p>Últimos lotes recibidos y registrados en el almacén municipal</p>
+                  </div>
+                </div>
+                <div class="history-header-actions">
+                  <div class="history-search-wrap">
+                    <svg class="history-search-icon"><use href="#i-search"/></svg>
+                    <input type="search" id="entriesSearchInput" class="history-search-input" placeholder="Buscar medicamento, lote, responsable..." />
+                  </div>
+                  <span class="history-count-badge" id="entriesTableCount">0 registros</span>
+                </div>
+              </div>
+
+              <div class="table-wrap">
+                <table class="entry-history-table">
+                  <thead>
+                    <tr>
+                      <th>Fecha / Hora</th>
+                      <th>Medicamento</th>
+                      <th>Lote</th>
+                      <th>Sucursal</th>
+                      <th>Cantidad</th>
+                      <th>Costo Unit.</th>
+                      <th>Total Compra</th>
+                      <th>Vencimiento</th>
+                      <th>Responsable</th>
+                    </tr>
+                  </thead>
+                  <tbody id="entriesHistoryTableBody">
+                    <tr><td colspan="9" class="text-center py-6">Cargando historial de ingresos...</td></tr>
+                  </tbody>
+                </table>
+              </div>
             </article>
           </section>
 
