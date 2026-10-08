@@ -298,7 +298,7 @@ function updateLiveCalculations() {
 }
 
 /**
- * Validar y dar feedback del vencimiento
+ * Validar y dar feedback del vencimiento como mensaje simple
  */
 function updateExpiryFeedback() {
   const expiryInput = document.getElementById("entryExpiry");
@@ -307,22 +307,25 @@ function updateExpiryFeedback() {
 
   const val = expiryInput.value;
   if (!val) {
-    feedbackEl.textContent = "Seleccione fecha de vencimiento";
-    feedbackEl.className = "expiry-feedback-badge";
+    feedbackEl.textContent = "Fecha de caducidad oficial del lote";
+    feedbackEl.className = "field-hint";
     return;
   }
 
   const exp = getExpiryStatus(val);
-  feedbackEl.className = `expiry-feedback-badge ${exp.status === "expired" ? "red" : exp.status}`;
 
   if (exp.status === "expired") {
-    feedbackEl.textContent = "⚠️ Lote ya vencido (No se puede registrar)";
+    feedbackEl.textContent = "⚠️ Lote vencido (no se permite el ingreso)";
+    feedbackEl.className = "field-hint text-danger";
   } else if (exp.status === "red") {
-    feedbackEl.textContent = `🔴 Vence en ${exp.months} meses (Plazo crítico)`;
+    feedbackEl.textContent = `Vence en ${exp.months} meses (plazo crítico)`;
+    feedbackEl.className = "field-hint text-danger";
   } else if (exp.status === "yellow") {
-    feedbackEl.textContent = `🟡 Vence en ${exp.months} meses (Alerta)`;
+    feedbackEl.textContent = `Vence en ${exp.months} meses (alerta)`;
+    feedbackEl.className = "field-hint text-warning";
   } else {
-    feedbackEl.textContent = `🟢 Vigente (${exp.months} meses restantes)`;
+    feedbackEl.textContent = `Lote vigente (${exp.months} meses restantes)`;
+    feedbackEl.className = "field-hint text-success";
   }
 }
 

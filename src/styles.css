@@ -3196,36 +3196,20 @@ dialog[open] {
   line-height: 1.35;
 }
 
-/* Badge de Semáforo de Vencimiento */
-.expiry-feedback-badge {
-  margin-top: 6px;
-  font-size: 0.73rem;
-  font-weight: 700;
-  padding: 4px 8px;
-  border-radius: 6px;
-  display: inline-block;
-  background: #f1f5f9;
-  color: #64748b;
-  border: 1px solid #e2e8f0;
-  transition: all 0.2s ease;
+/* Estados de texto para field-hint */
+.field-hint.text-danger {
+  color: #dc2626 !important;
+  font-weight: 600;
 }
 
-.expiry-feedback-badge.green {
-  background: #ecfdf5;
-  color: #047857;
-  border-color: #a7f3d0;
+.field-hint.text-warning {
+  color: #d97706 !important;
+  font-weight: 600;
 }
 
-.expiry-feedback-badge.yellow {
-  background: #fffbeb;
-  color: #b45309;
-  border-color: #fde68a;
-}
-
-.expiry-feedback-badge.red {
-  background: #fef2f2;
-  color: #b91c1c;
-  border-color: #fecaca;
+.field-hint.text-success {
+  color: #059669 !important;
+  font-weight: 600;
 }
 
 /* Footer de Acciones del Formulario */
