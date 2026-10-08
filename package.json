@@ -5,6 +5,6 @@
   "type": "module",
   "scripts": {
     "dev": "npx serve . -l 4173",
-    "check": "node --check src/js/app.js && node --check src/js/data.js && node --check src/js/store.js"
+    "check": "node --check src/js/app.js && node --check src/config/supabase.js && node --check src/services/authService.js && node --check src/modules/auth/loginView.js"
   }
 }
