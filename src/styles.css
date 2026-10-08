@@ -1119,7 +1119,7 @@ tbody tr:hover {
    LOGIN OFICIAL - GOBIERNO MUNICIPAL DE SAN CARLOS
 ========================================================= */
 body.logged-out .app-shell {
-  filter: blur(16px) brightness(0.6);
+  filter: blur(14px) brightness(0.65);
   pointer-events: none;
   user-select: none;
   transition: filter 0.4s ease;
@@ -1132,7 +1132,7 @@ body.logged-out .app-shell {
   display: none;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: 20px;
   overflow-y: auto;
 }
 
@@ -1141,26 +1141,37 @@ body.logged-out .app-shell {
   animation: fadeIn 0.4s ease-out;
 }
 
-/* Fondo con la fotografía oficial de San Carlos */
-.login-background-photo {
+/* Envoltorio del fondo con la foto panorámica de San Carlos */
+.login-bg-wrapper {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.login-bg-photo {
   position: absolute;
   inset: 0;
   background-image: url('/assets/fondo-san-carlos.jpg');
   background-size: cover;
-  background-position: center center;
+  background-position: center 35%;
   background-repeat: no-repeat;
-  filter: brightness(0.6) saturate(1.15);
-  transform: scale(1.02);
-  z-index: 1;
+  filter: brightness(0.92) contrast(1.05);
+  transform: scale(1.0);
 }
 
-/* Máscara de degradado institucional para legibilidad y elegancia */
-.login-backdrop-dark {
+/* Degradado suave y cinematográfico para apreciar la foto real de San Carlos */
+.login-bg-overlay {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 50% 30%, rgba(6, 78, 59, 0.7) 0%, rgba(15, 23, 42, 0.88) 100%);
-  backdrop-filter: blur(4px);
-  z-index: 2;
+  background: linear-gradient(
+    180deg,
+    rgba(15, 23, 42, 0.45) 0%,
+    rgba(6, 44, 32, 0.25) 45%,
+    rgba(15, 23, 42, 0.58) 100%
+  );
+  backdrop-filter: blur(1px);
 }
 
 /* Tarjeta Oficial de Acceso */
@@ -1168,12 +1179,12 @@ body.logged-out .app-shell {
   position: relative;
   z-index: 10;
   width: 100%;
-  max-width: 440px;
-  background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(16px);
-  border-radius: 24px;
-  padding: 38px 34px 30px;
-  box-shadow: 0 30px 70px -15px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.3);
+  max-width: 410px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(20px);
+  border-radius: 22px;
+  padding: 34px 30px 24px;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(226, 232, 240, 0.95);
   text-align: center;
   animation: scaleIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
@@ -1186,24 +1197,24 @@ body.logged-out .app-shell {
 }
 
 .official-header {
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
 .official-shield-container {
-  width: 86px;
-  height: 86px;
-  margin: 0 auto 12px;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 10px;
   position: relative;
   display: grid;
   place-items: center;
 }
 
 .official-shield-img {
-  width: 72px;
-  height: 72px;
+  width: 66px;
+  height: 66px;
   object-fit: contain;
   animation: floatLogo 4.2s ease-in-out infinite;
-  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.25));
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.22));
   position: relative;
   z-index: 2;
 }
@@ -1223,7 +1234,7 @@ body.logged-out .app-shell {
   border: 1px solid #a7f3d0;
   padding: 4px 12px;
   border-radius: var(--radius-full);
-  font-size: 0.64rem;
+  font-size: 0.62rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1232,18 +1243,18 @@ body.logged-out .app-shell {
 
 .official-title {
   font-family: 'Outfit', sans-serif;
-  font-size: 1.6rem;
+  font-size: 1.5rem;
   font-weight: 800;
   color: #0f172a;
   letter-spacing: -0.025em;
-  margin-bottom: 3px;
+  margin-bottom: 2px;
 }
 
 .official-subtitle {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: #64748b;
   font-weight: 500;
-  line-height: 1.4;
+  line-height: 1.35;
   margin-bottom: 0;
 }
 
@@ -1251,25 +1262,25 @@ body.logged-out .app-shell {
 .security-banner {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   background: #f8fafc;
   border: 1.5px solid #e2e8f0;
   border-radius: 12px;
-  padding: 10px 14px;
-  margin-bottom: 22px;
+  padding: 9px 12px;
+  margin-bottom: 18px;
   text-align: left;
 }
 
 .security-icon {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   color: #059669;
   flex-shrink: 0;
 }
 
 .security-banner strong {
   display: block;
-  font-size: 0.68rem;
+  font-size: 0.67rem;
   font-weight: 800;
   color: #0f172a;
   letter-spacing: 0.05em;
@@ -1277,7 +1288,7 @@ body.logged-out .app-shell {
 
 .security-banner small {
   display: block;
-  font-size: 0.66rem;
+  font-size: 0.64rem;
   color: #64748b;
   margin-top: 1px;
 }
@@ -1288,15 +1299,40 @@ body.logged-out .app-shell {
 }
 
 .official-form-group {
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
 .official-form-group label {
   display: block;
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 700;
   color: #334155;
-  margin-bottom: 6px;
+  margin-bottom: 5px;
+}
+
+.label-with-warning {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.label-with-warning label {
+  margin-bottom: 0;
+}
+
+.caps-warning {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #b45309;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  animation: fadeIn 0.2s ease;
 }
 
 .official-input-wrap {
@@ -1321,9 +1357,9 @@ body.logged-out .app-shell {
   border: 1.5px solid #cbd5e1 !important;
   border-radius: 12px !important;
   padding: 0 44px 0 44px !important;
-  font-size: 0.94rem !important;
+  font-size: 0.92rem !important;
   color: #0f172a !important;
-  background: #f8fafc !important;
+  background: #ffffff !important;
   font-family: inherit !important;
   transition: all 0.2s ease !important;
   outline: none !important;
@@ -1332,7 +1368,6 @@ body.logged-out .app-shell {
 
 .official-input:focus {
   border-color: #059669 !important;
-  background: #ffffff !important;
   box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.16) !important;
 }
 
@@ -1342,7 +1377,7 @@ body.logged-out .app-shell {
 
 .btn-toggle-password {
   position: absolute;
-  right: 12px;
+  right: 10px;
   width: 32px;
   height: 32px;
   border-radius: 8px;
@@ -1368,11 +1403,11 @@ body.logged-out .app-shell {
 /* Botón Oficial */
 .btn-official-submit {
   width: 100%;
-  height: 50px;
+  height: 48px;
   border-radius: 12px;
   background: linear-gradient(135deg, #059669 0%, #047857 100%);
   color: #ffffff;
-  font-size: 0.95rem;
+  font-size: 0.94rem;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -1380,14 +1415,14 @@ body.logged-out .app-shell {
   gap: 10px;
   border: 0;
   cursor: pointer;
-  box-shadow: 0 6px 18px rgba(5, 150, 105, 0.35);
+  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35);
   transition: all 0.2s ease;
-  margin-top: 22px;
+  margin-top: 20px;
 }
 
 .btn-official-submit:hover {
   transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(5, 150, 105, 0.45);
+  box-shadow: 0 6px 20px rgba(5, 150, 105, 0.45);
   background: linear-gradient(135deg, #047857 0%, #064e3b 100%);
 }
 
@@ -1397,20 +1432,20 @@ body.logged-out .app-shell {
 }
 
 .submit-lock-icon {
-  width: 18px;
-  height: 18px;
+  width: 17px;
+  height: 17px;
   stroke: currentColor;
 }
 
 /* Pie de la tarjeta */
 .official-card-footer {
-  margin-top: 24px;
-  padding-top: 18px;
+  margin-top: 20px;
+  padding-top: 16px;
   border-top: 1px solid #f1f5f9;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .db-status-pill {
@@ -1422,7 +1457,7 @@ body.logged-out .app-shell {
   color: #166534;
   padding: 4px 12px;
   border-radius: 9999px;
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 600;
 }
 
@@ -1436,11 +1471,12 @@ body.logged-out .app-shell {
 }
 
 .copyright-legal {
-  font-size: 0.68rem;
+  font-size: 0.67rem;
   color: #94a3b8;
   margin: 0;
   font-weight: 500;
 }
+
 
 
 /* Botón de Salir en Barra Superior */

@@ -44,8 +44,8 @@ export async function supabaseQuery(endpoint, options = {}) {
 export async function checkSupabaseConnection() {
   try {
     const res = await supabaseQuery("branches?select=id&limit=1");
-    return { ok: true, message: "Conectado a Supabase PostgreSQL" };
+    return { ok: true, message: "Servidor Central Conectado" };
   } catch (err) {
-    return { ok: false, message: "Sin conexión a Supabase (Modo local)" };
+    return { ok: false, message: "Modo Local (Sin red)" };
   }
 }

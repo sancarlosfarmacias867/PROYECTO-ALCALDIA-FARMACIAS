@@ -27,11 +27,15 @@ export function renderLoginOverlay() {
   overlay.style.display = "flex";
 
   overlay.innerHTML = `
-    <div class="login-background-photo"></div>
-    <div class="login-backdrop-dark"></div>
+    <!-- Capas de fondo con imagen panorámica visible -->
+    <div class="login-bg-wrapper">
+      <div class="login-bg-photo"></div>
+      <div class="login-bg-overlay"></div>
+    </div>
 
+    <!-- Tarjeta Principal de Inicio de Sesión -->
     <div class="login-card-official">
-      <!-- Escudo y Encabezado Institucional -->
+      <!-- Encabezado Institucional -->
       <div class="official-header">
         <div class="official-shield-container">
           <div class="shield-aura"></div>
@@ -39,21 +43,21 @@ export function renderLoginOverlay() {
         </div>
         <span class="badge-governmental">GOBIERNO AUTÓNOMO MUNICIPAL DE SAN CARLOS</span>
         <h1 class="official-title">Red Municipal de Farmacias</h1>
-        <p class="official-subtitle">Sistema de Control de Inventario, Ventas y Entregas SUS</p>
+        <p class="official-subtitle">Sistema Integrado de Farmacias y Suministros SUS</p>
       </div>
 
       <div class="security-banner">
         <svg class="security-icon"><use href="#i-shield"/></svg>
         <div>
-          <strong>PORTAL INSTITUCIONAL SEGURO</strong>
-          <small>Acceso restringido únicamente a funcionarios autorizados</small>
+          <strong>PORTAL OFICIAL DE ACCESO</strong>
+          <small>Acceso exclusivo a funcionarios y personal médico autorizado</small>
         </div>
       </div>
 
-      <!-- Formulario de Acceso Oficial -->
-      <form id="mainLoginForm" class="official-form">
+      <!-- Formulario de Acceso -->
+      <form id="mainLoginForm" class="official-form" autocomplete="on">
         <div class="official-form-group">
-          <label for="loginEmail">Usuario o Correo Institucional</label>
+          <label for="loginEmail">Usuario Institucional</label>
           <div class="official-input-wrap">
             <svg class="official-input-icon"><use href="#i-users"/></svg>
             <input 
@@ -69,7 +73,13 @@ export function renderLoginOverlay() {
         </div>
 
         <div class="official-form-group">
-          <label for="loginPin">Contraseña o PIN de Seguridad</label>
+          <div class="label-with-warning">
+            <label for="loginPin">Contraseña</label>
+            <span id="capsWarning" class="caps-warning hidden">
+              <svg width="12" height="12" viewBox="0 0 24 24"><path d="M12 2l10 18H2L12 2zM12 9v4m0 4h.01"/></svg>
+              Bloq Mayús activado
+            </span>
+          </div>
           <div class="official-input-wrap">
             <svg class="official-input-icon"><use href="#i-lock"/></svg>
             <input 
@@ -77,10 +87,10 @@ export function renderLoginOverlay() {
               id="loginPin" 
               class="official-input" 
               required 
-              placeholder="Ingrese su contraseña" 
+              placeholder="••••••••••••" 
               autocomplete="current-password" 
             />
-            <button type="button" class="btn-toggle-password" id="togglePasswordBtn" aria-label="Mostrar u ocultar contraseña">
+            <button type="button" class="btn-toggle-password" id="togglePasswordBtn" title="Mostrar u ocultar contraseña" aria-label="Mostrar u ocultar contraseña">
               <svg id="eyeIconOpen"><use href="#i-eye"/></svg>
               <svg id="eyeIconClosed" class="hidden"><use href="#i-eye-off"/></svg>
             </button>
@@ -97,7 +107,7 @@ export function renderLoginOverlay() {
       <div class="official-card-footer">
         <div class="db-status-pill">
           <span class="pulse-indicator"></span>
-          <span>Base de Datos Supabase (PostgreSQL 17) · Activa</span>
+          <span>Servidor Central Activo · Conexión Segura</span>
         </div>
         <p class="copyright-legal">
           Dirección Municipal de Salud · San Carlos, Santa Cruz, Bolivia
@@ -111,6 +121,7 @@ export function renderLoginOverlay() {
   const pinInput = document.getElementById("loginPin");
   const eyeOpen = document.getElementById("eyeIconOpen");
   const eyeClosed = document.getElementById("eyeIconClosed");
+  const capsWarning = document.getElementById("capsWarning");
 
   toggleBtn?.addEventListener("click", () => {
     if (!pinInput) return;
@@ -122,6 +133,14 @@ export function renderLoginOverlay() {
     }
   });
 
+  // Detección de Bloq Mayús (Caps Lock)
+  pinInput?.addEventListener("keyup", (e) => {
+    if (e.getModifierState && capsWarning) {
+      const isCaps = e.getModifierState("CapsLock");
+      capsWarning.classList.toggle("hidden", !isCaps);
+    }
+  });
+
   // Envío del Formulario
   const form = document.getElementById("mainLoginForm");
   const submitBtn = document.getElementById("loginSubmitBtn");
@@ -129,8 +148,13 @@ export function renderLoginOverlay() {
 
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const email = document.getElementById("loginEmail").value;
-    const pin = document.getElementById("loginPin").value;
+    const email = document.getElementById("loginEmail").value.trim();
+    const pin = document.getElementById("loginPin").value.trim();
+
+    if (!email || !pin) {
+      showToast("Campos requeridos", "Por favor ingrese su usuario y contraseña.", "warning");
+      return;
+    }
 
     try {
       if (submitBtn && submitText) {
