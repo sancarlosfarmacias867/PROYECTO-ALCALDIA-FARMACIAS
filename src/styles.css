@@ -1118,11 +1118,12 @@ tbody tr:hover {
 /* =========================================================
    LOGIN OFICIAL - GOBIERNO MUNICIPAL DE SAN CARLOS
 ========================================================= */
+html.logged-out .app-shell,
 body.logged-out .app-shell {
   filter: blur(14px) brightness(0.65);
   pointer-events: none;
   user-select: none;
-  transition: filter 0.4s ease;
+  transition: filter 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .login-overlay {
@@ -1134,11 +1135,26 @@ body.logged-out .app-shell {
   justify-content: center;
   padding: 20px;
   overflow-y: auto;
+  background: rgba(15, 23, 42, 0.42);
 }
 
+html.logged-out .login-overlay,
 .login-overlay.active {
   display: flex !important;
-  animation: fadeIn 0.4s ease-out;
+  animation: loginOverlayFadeIn 0.65s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+@keyframes loginOverlayFadeIn {
+  0% {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+  }
+  100% {
+    opacity: 1;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
 }
 
 /* Envoltorio del fondo con la foto panorámica de San Carlos */
@@ -1158,7 +1174,20 @@ body.logged-out .app-shell {
   background-position: center 35%;
   background-repeat: no-repeat;
   filter: brightness(0.92) contrast(1.05);
-  transform: scale(1.0);
+  animation: loginPhotoEntrance 1.1s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+@keyframes loginPhotoEntrance {
+  0% {
+    opacity: 0;
+    transform: scale(1.07);
+    filter: brightness(0.65) blur(5px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.0);
+    filter: brightness(0.92) contrast(1.05) blur(0px);
+  }
 }
 
 /* Degradado verde municipal institucional para dar identidad sin ocultar la foto real */
@@ -1172,9 +1201,19 @@ body.logged-out .app-shell {
     rgba(6, 44, 32, 0.55) 100%
   );
   backdrop-filter: blur(1.5px);
+  animation: loginGreenOverlayEntrance 0.75s cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
 
-/* Tarjeta Oficial de Acceso */
+@keyframes loginGreenOverlayEntrance {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Tarjeta Oficial de Acceso con elevación suave */
 .login-card-official {
   position: relative;
   z-index: 10;
@@ -1182,19 +1221,77 @@ body.logged-out .app-shell {
   max-width: 410px;
   background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-radius: 22px;
   padding: 34px 30px 24px;
   box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(226, 232, 240, 0.95);
   text-align: center;
-  animation: scaleIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: loginCardEntrance 0.75s cubic-bezier(0.16, 1, 0.3, 1) backwards;
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
   transform-origin: center center;
 }
 
-@keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.95) translateY(12px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
+@keyframes loginCardEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(26px) scale(0.94);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.8);
+  }
+}
+
+/* Cascada de aparición fluida para cada elemento interno */
+@keyframes loginItemEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.login-card-official .official-shield-container {
+  animation: loginItemEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.12s backwards;
+}
+
+.login-card-official .badge-governmental {
+  animation: loginItemEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.18s backwards;
+}
+
+.login-card-official .official-title {
+  animation: loginItemEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.24s backwards;
+}
+
+.login-card-official .official-subtitle {
+  animation: loginItemEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.30s backwards;
+}
+
+.login-card-official .security-banner,
+.login-card-official .security-error-banner {
+  animation: loginItemEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.36s backwards;
+}
+
+.login-card-official .official-form .official-form-group:nth-of-type(1) {
+  animation: loginItemEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.42s backwards;
+}
+
+.login-card-official .official-form .official-form-group:nth-of-type(2) {
+  animation: loginItemEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.48s backwards;
+}
+
+.login-card-official .btn-official-submit {
+  animation: loginItemEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.54s backwards;
+}
+
+.login-card-official .official-card-footer {
+  animation: loginItemEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.60s backwards;
 }
 
 /* Animación de vibración / sacudida cuando se equivocan */
@@ -1205,7 +1302,7 @@ body.logged-out .app-shell {
 }
 
 .login-card-official.shake-error {
-  animation: shakeError 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  animation: shakeError 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both !important;
 }
 
 .official-header {

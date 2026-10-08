@@ -24,28 +24,8 @@ function clearLockState() {
   localStorage.removeItem(LOCK_KEY);
 }
 
-export function renderLoginOverlay() {
-  let overlay = document.getElementById("loginOverlay");
-  if (!overlay) {
-    overlay = document.createElement("div");
-    overlay.id = "loginOverlay";
-    overlay.className = "login-overlay";
-    document.body.appendChild(overlay);
-  }
-
-  const currentUser = getCurrentUser();
-  if (currentUser) {
-    overlay.classList.remove("active");
-    overlay.style.display = "none";
-    document.body.classList.remove("logged-out");
-    return;
-  }
-
-  document.body.classList.add("logged-out");
-  overlay.classList.add("active");
-  overlay.style.display = "flex";
-
-  overlay.innerHTML = `
+export function getLoginTemplate() {
+  return `
     <!-- Capas de fondo con imagen panorámica y degradado verde institucional -->
     <div class="login-bg-wrapper">
       <div class="login-bg-photo"></div>
@@ -146,6 +126,34 @@ export function renderLoginOverlay() {
       </div>
     </div>
   `;
+}
+
+export function renderLoginOverlay(forceRebuild = false) {
+  let overlay = document.getElementById("loginOverlay");
+  if (!overlay) {
+    overlay = document.createElement("div");
+    overlay.id = "loginOverlay";
+    overlay.className = "login-overlay";
+    document.body.appendChild(overlay);
+  }
+
+  const currentUser = getCurrentUser();
+  if (currentUser) {
+    overlay.classList.remove("active");
+    overlay.style.display = "none";
+    document.body.classList.remove("logged-out");
+    document.documentElement.classList.remove("logged-out");
+    return;
+  }
+
+  document.documentElement.classList.add("logged-out");
+  document.body.classList.add("logged-out");
+  overlay.classList.add("active");
+  overlay.style.display = "flex";
+
+  if (forceRebuild || !overlay.querySelector("#mainLoginForm")) {
+    overlay.innerHTML = getLoginTemplate();
+  }
 
   // Inicializar componentes interactivos
   setupInteractiveElements();
@@ -218,6 +226,7 @@ async function handleFormSubmit(e) {
     overlay?.classList.remove("active");
     if (overlay) overlay.style.display = "none";
     document.body.classList.remove("logged-out");
+    document.documentElement.classList.remove("logged-out");
 
   } catch (err) {
     // Error de autenticación: disparar vibración y política progresiva

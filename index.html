@@ -8,8 +8,17 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/src/styles.css?v=7" />
+    <link rel="stylesheet" href="/src/styles.css?v=8" />
     <title>Farmacias Municipales · San Carlos</title>
+    <script>
+      (function() {
+        try {
+          if (!localStorage.getItem('farmacias_san_carlos_session')) {
+            document.documentElement.classList.add('logged-out');
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <svg class="svg-sprite" aria-hidden="true">
@@ -33,6 +42,101 @@
       <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
       <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22"/></symbol>
     </svg>
+
+    <!-- Portal Oficial e Institucional de Acceso -->
+    <div id="loginOverlay" class="login-overlay">
+      <div class="login-bg-wrapper">
+        <div class="login-bg-photo"></div>
+        <div class="login-bg-overlay"></div>
+      </div>
+      <div class="login-card-official">
+        <div class="official-header">
+          <div class="official-shield-container">
+            <div class="shield-aura"></div>
+            <img src="/assets/logo-san-carlos.png" alt="Escudo Oficial del Municipio de San Carlos" class="official-shield-img" />
+          </div>
+          <span class="badge-governmental">GOBIERNO AUTÓNOMO MUNICIPAL DE SAN CARLOS</span>
+          <h1 class="official-title">Red Municipal de Farmacias</h1>
+          <p class="official-subtitle">Sistema Integrado de Farmacias y Suministros SUS</p>
+        </div>
+
+        <div class="security-banner" id="normalSecurityBanner">
+          <svg class="security-icon"><use href="#i-shield"/></svg>
+          <div>
+            <strong>PORTAL OFICIAL DE ACCESO</strong>
+            <small>Acceso exclusivo a funcionarios y personal médico autorizado</small>
+          </div>
+        </div>
+
+        <div class="security-error-banner hidden" id="loginErrorBanner">
+          <svg class="security-error-icon" viewBox="0 0 24 24">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM12 8v4m0 4h.01"/>
+          </svg>
+          <div>
+            <strong id="errorBannerTitle">Credenciales no autorizadas</strong>
+            <small id="errorBannerText">Verifique su usuario y contraseña.</small>
+          </div>
+        </div>
+
+        <form id="mainLoginForm" class="official-form" autocomplete="on">
+          <div class="official-form-group">
+            <label for="loginEmail">Usuario Institucional</label>
+            <div class="official-input-wrap">
+              <svg class="official-input-icon"><use href="#i-users"/></svg>
+              <input 
+                type="text" 
+                id="loginEmail" 
+                class="official-input" 
+                required 
+                placeholder="Ingrese su usuario o correo" 
+                autocomplete="username" 
+                autofocus
+              />
+            </div>
+          </div>
+
+          <div class="official-form-group">
+            <div class="label-with-warning">
+              <label for="loginPin">Contraseña</label>
+              <span id="capsWarning" class="caps-warning hidden">
+                <svg width="12" height="12" viewBox="0 0 24 24"><path d="M12 2l10 18H2L12 2zM12 9v4m0 4h.01"/></svg>
+                Bloq Mayús activado
+              </span>
+            </div>
+            <div class="official-input-wrap">
+              <svg class="official-input-icon"><use href="#i-lock"/></svg>
+              <input 
+                type="password" 
+                id="loginPin" 
+                class="official-input" 
+                required 
+                placeholder="••••••••••••" 
+                autocomplete="current-password" 
+              />
+              <button type="button" class="btn-toggle-password" id="togglePasswordBtn" title="Mostrar u ocultar contraseña" aria-label="Mostrar u ocultar contraseña">
+                <svg id="eyeIconOpen"><use href="#i-eye"/></svg>
+                <svg id="eyeIconClosed" class="hidden"><use href="#i-eye-off"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" id="loginSubmitBtn" class="btn-official-submit">
+            <svg class="submit-lock-icon"><use href="#i-lock"/></svg>
+            <span id="submitBtnText">Ingresar al Sistema</span>
+          </button>
+        </form>
+
+        <div class="official-card-footer">
+          <div class="db-status-pill">
+            <span class="pulse-indicator"></span>
+            <span>Servidor Central Activo · Conexión Segura</span>
+          </div>
+          <p class="copyright-legal">
+            Dirección Municipal de Salud · San Carlos, Santa Cruz, Bolivia
+          </p>
+        </div>
+      </div>
+    </div>
 
     <div class="app-shell">
       <aside class="sidebar" id="sidebar">

@@ -25,9 +25,17 @@ async function initApp() {
   const user = initAuth();
   updateNavbarProfile();
 
-  // Si no hay usuario logueado, mostrar inmediatamente el Login elegante
+  // Si no hay usuario logueado, asegurar estado de Login
   if (!user) {
     renderLoginOverlay();
+  } else {
+    document.documentElement.classList.remove("logged-out");
+    document.body.classList.remove("logged-out");
+    const overlay = document.getElementById("loginOverlay");
+    if (overlay) {
+      overlay.classList.remove("active");
+      overlay.style.display = "none";
+    }
   }
 
   // 2. Verificar Conexión con Supabase
@@ -251,7 +259,7 @@ function initGlobalEvents() {
     const user = e.detail?.user;
     updateNavbarProfile();
     if (!user) {
-      renderLoginOverlay();
+      renderLoginOverlay(true);
       return;
     }
     await populateBranchSelector();
