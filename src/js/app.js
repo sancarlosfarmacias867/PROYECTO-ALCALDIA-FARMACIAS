@@ -25,6 +25,11 @@ async function initApp() {
   const user = initAuth();
   updateNavbarProfile();
 
+  // Si no hay usuario logueado, mostrar inmediatamente el Login elegante
+  if (!user) {
+    renderLoginOverlay();
+  }
+
   // 2. Verificar Conexión con Supabase
   const syncStatus = document.getElementById("syncStatus");
   const conn = await checkSupabaseConnection();
@@ -46,9 +51,12 @@ async function initApp() {
   initRestockEvents();
   initGlobalEvents();
 
-  // 6. Cargar la vista activa
-  await loadActiveView();
+  // 6. Cargar la vista activa si hay sesión iniciada
+  if (user) {
+    await loadActiveView();
+  }
 }
+
 
 async function populateBranchSelector() {
   const branchSelect = document.getElementById("branchSelect");
@@ -240,11 +248,17 @@ function initGlobalEvents() {
 
   // Evento de cambio de autenticación
   window.addEventListener("pharmacy-auth-change", async (e) => {
+    const user = e.detail?.user;
     updateNavbarProfile();
+    if (!user) {
+      renderLoginOverlay();
+      return;
+    }
     await populateBranchSelector();
     applyRoleVisibility();
     await loadActiveView();
   });
+
 }
 
 // Iniciar aplicación

@@ -1,5 +1,5 @@
 /**
- * Servicio de Autenticación y Control de Roles
+ * Servicio de Autenticación y Control de Roles (Supabase)
  */
 import { supabaseQuery } from "../config/supabase.js";
 import { showToast } from "./toastService.js";
@@ -9,14 +9,15 @@ const AUTH_KEY = "farmacias_san_carlos_session";
 let currentUser = null;
 
 export const DEFAULT_USERS = [
-  { id: "U-01", name: "María Aguilera", email: "admin@sancarlos.gob.bo", pin: "1234", role: "admin", branch_id: "all", active: true },
-  { id: "U-02", name: "Carlos Rivero", email: "carlos.tecnico@sancarlos.gob.bo", pin: "1234", role: "tecnico", branch_id: "san-carlos", active: true },
-  { id: "U-03", name: "Ana Rojas", email: "ana.santafe@sancarlos.gob.bo", pin: "1234", role: "vendedor", branch_id: "santa-fe", active: true },
-  { id: "U-04", name: "Luis Pedraza", email: "luis.buenretiro@sancarlos.gob.bo", pin: "1234", role: "vendedor", branch_id: "buen-retiro", active: true },
-  { id: "U-05", name: "Carla Méndez", email: "carla.tecnico@sancarlos.gob.bo", pin: "1234", role: "tecnico", branch_id: "antofagasta", active: true },
-  { id: "U-06", name: "José Vaca", email: "jose.sancarlos@sancarlos.gob.bo", pin: "1234", role: "vendedor", branch_id: "san-carlos", active: true },
-  { id: "U-07", name: "Rosa Suárez", email: "rosa.villaimperial@sancarlos.gob.bo", pin: "1234", role: "vendedor", branch_id: "villa-imperial", active: true },
-  { id: "U-08", name: "Diego Lima", email: "diego.2agosto@sancarlos.gob.bo", pin: "1234", role: "vendedor", branch_id: "2-agosto", active: true },
+  { id: "U-ADMIN", name: "Administrador General", email: "admin", pin: "admin123", role: "admin", branch_id: "all", active: true },
+  { id: "U-01", name: "María Aguilera", email: "admin@sancarlos.gob.bo", pin: "admin123", role: "admin", branch_id: "all", active: true },
+  { id: "U-02", name: "Carlos Rivero", email: "carlos.tecnico@sancarlos.gob.bo", pin: "admin123", role: "tecnico", branch_id: "san-carlos", active: true },
+  { id: "U-03", name: "Ana Rojas", email: "ana.santafe@sancarlos.gob.bo", pin: "admin123", role: "vendedor", branch_id: "santa-fe", active: true },
+  { id: "U-04", name: "Luis Pedraza", email: "luis.buenretiro@sancarlos.gob.bo", pin: "admin123", role: "vendedor", branch_id: "buen-retiro", active: true },
+  { id: "U-05", name: "Carla Méndez", email: "carla.tecnico@sancarlos.gob.bo", pin: "admin123", role: "tecnico", branch_id: "antofagasta", active: true },
+  { id: "U-06", name: "José Vaca", email: "jose.sancarlos@sancarlos.gob.bo", pin: "admin123", role: "vendedor", branch_id: "san-carlos", active: true },
+  { id: "U-07", name: "Rosa Suárez", email: "rosa.villaimperial@sancarlos.gob.bo", pin: "admin123", role: "vendedor", branch_id: "villa-imperial", active: true },
+  { id: "U-08", name: "Diego Lima", email: "diego.2agosto@sancarlos.gob.bo", pin: "admin123", role: "vendedor", branch_id: "2-agosto", active: true },
 ];
 
 export function initAuth() {
@@ -25,37 +26,42 @@ export function initAuth() {
     if (saved) {
       currentUser = JSON.parse(saved);
     } else {
-      // Default to María Aguilera (Admin)
-      currentUser = DEFAULT_USERS[0];
-      localStorage.setItem(AUTH_KEY, JSON.stringify(currentUser));
+      currentUser = null;
     }
   } catch (e) {
-    currentUser = DEFAULT_USERS[0];
+    currentUser = null;
   }
   return currentUser;
 }
 
 export function getCurrentUser() {
-  if (!currentUser) initAuth();
   return currentUser;
 }
 
-export async function login(email, pin) {
-  const cleanEmail = email.trim().toLowerCase();
+export async function login(identifier, pin) {
+  const cleanId = identifier.trim().toLowerCase();
   const cleanPin = pin.trim();
 
   try {
-    const users = await supabaseQuery(`app_users?email=eq.${encodeURIComponent(cleanEmail)}&select=*`);
+    // Buscar por email o id en Supabase
+    let query = `app_users?email=eq.${encodeURIComponent(cleanId)}&select=*`;
+    let users = await supabaseQuery(query);
+
+    // Si no encuentra por email exacto y buscó "admin", buscar también "admin@sancarlos.gob.bo"
+    if ((!users || users.length === 0) && cleanId === "admin") {
+      users = await supabaseQuery(`app_users?email=eq.admin@sancarlos.gob.bo&select=*`);
+    }
+
     if (users && users.length > 0) {
       const user = users[0];
       if (!user.active) {
         throw new Error("Este usuario se encuentra desactivado. Comuníquese con administración.");
       }
       if (user.pin && user.pin !== cleanPin) {
-        throw new Error("PIN o contraseña incorrecta.");
+        throw new Error("Contraseña o PIN incorrecto. Intente nuevamente.");
       }
 
-      // Actualizar último acceso
+      // Actualizar último acceso en Supabase
       try {
         await supabaseQuery(`app_users?id=eq.${user.id}`, {
           method: "PATCH",
@@ -66,26 +72,29 @@ export async function login(email, pin) {
       currentUser = user;
       localStorage.setItem(AUTH_KEY, JSON.stringify(user));
       window.dispatchEvent(new CustomEvent("pharmacy-auth-change", { detail: { user } }));
-      showToast("Bienvenido", `Sesión iniciada como ${user.name} (${getRoleLabel(user.role)})`);
+      showToast("Bienvenido al Sistema", `${user.name} (${getRoleLabel(user.role)})`);
       return user;
     }
   } catch (err) {
-    if (err.message.includes("desactivado") || err.message.includes("PIN")) {
+    if (err.message.includes("desactivado") || err.message.includes("Contraseña") || err.message.includes("PIN")) {
       throw err;
     }
-    console.warn("Fallo login Supabase, intentando usuarios locales:", err);
+    console.warn("Fallo consulta Supabase, verificando respaldo local:", err);
   }
 
-  // Fallback a usuarios por defecto
-  const fallback = DEFAULT_USERS.find((u) => u.email.toLowerCase() === cleanEmail);
+  // Fallback a usuarios locales por defecto
+  const fallback = DEFAULT_USERS.find(
+    (u) => u.email.toLowerCase() === cleanId || (cleanId === "admin" && u.role === "admin")
+  );
+
   if (fallback) {
     if (fallback.pin !== cleanPin) {
-      throw new Error("PIN o contraseña incorrecta.");
+      throw new Error("Contraseña o PIN incorrecto. Intente nuevamente.");
     }
     currentUser = fallback;
     localStorage.setItem(AUTH_KEY, JSON.stringify(fallback));
     window.dispatchEvent(new CustomEvent("pharmacy-auth-change", { detail: { user: fallback } }));
-    showToast("Bienvenido", `Sesión iniciada como ${fallback.name} (${getRoleLabel(fallback.role)})`);
+    showToast("Bienvenido al Sistema", `${fallback.name} (${getRoleLabel(fallback.role)})`);
     return fallback;
   }
 
@@ -107,6 +116,7 @@ export function logout() {
   localStorage.removeItem(AUTH_KEY);
   currentUser = null;
   window.dispatchEvent(new CustomEvent("pharmacy-auth-change", { detail: { user: null } }));
+  showToast("Sesión cerrada", "Has salido del sistema de farmacias.", "info");
 }
 
 export function isAdmin() {

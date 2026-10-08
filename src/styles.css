@@ -1118,66 +1118,134 @@ tbody tr:hover {
 /* =========================================================
    LOGIN OVERLAY & FLOATING LOGO MODAL
 ========================================================= */
+body.logged-out .app-shell {
+  filter: blur(14px) brightness(0.85);
+  pointer-events: none;
+  user-select: none;
+  transition: filter 0.4s ease;
+}
+
 .login-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(16px);
-  z-index: 100;
+  background: radial-gradient(circle at 50% 20%, rgba(6, 95, 70, 0.45) 0%, rgba(15, 23, 42, 0.92) 85%);
+  backdrop-filter: blur(20px);
+  z-index: 9999;
   display: none;
-  place-items: center;
-  padding: 20px;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow-y: auto;
 }
 
 .login-overlay.active {
-  display: grid;
-  animation: fadeIn 0.3s ease;
+  display: flex !important;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.login-backdrop-animated {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.glow-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.45;
+  animation: floatOrb 12s infinite alternate ease-in-out;
+}
+
+.orb-1 {
+  width: 380px;
+  height: 380px;
+  background: #10b981;
+  top: 10%;
+  left: 15%;
+}
+
+.orb-2 {
+  width: 320px;
+  height: 320px;
+  background: #047857;
+  bottom: 10%;
+  right: 15%;
+  animation-delay: -4s;
+}
+
+.orb-3 {
+  width: 250px;
+  height: 250px;
+  background: #f59e0b;
+  bottom: 30%;
+  left: 45%;
+  opacity: 0.25;
+  animation-delay: -7s;
+}
+
+@keyframes floatOrb {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(40px, -30px) scale(1.15); }
+  100% { transform: translate(-30px, 40px) scale(0.9); }
 }
 
 .login-card {
-  width: min(440px, 100%);
-  background: var(--white);
+  position: relative;
+  z-index: 2;
+  width: min(480px, 100%);
+  background: rgba(255, 255, 255, 0.98);
   border-radius: var(--radius-xl);
-  padding: 36px 32px;
-  box-shadow: var(--shadow-xl);
+  padding: 38px 36px;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.2);
   text-align: center;
-  border: 1px solid var(--slate-200);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  animation: scaleIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.94) translateY(12px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 .brand-floating-logo {
-  width: 76px;
-  height: 76px;
-  margin: 0 auto 16px;
+  width: 88px;
+  height: 88px;
+  margin: 0 auto 14px;
   position: relative;
   display: grid;
   place-items: center;
 }
 
 .floating-logo-img {
-  width: 64px;
-  height: 64px;
+  width: 72px;
+  height: 72px;
   object-fit: contain;
-  animation: floatLogo 3.5s ease-in-out infinite;
-  filter: drop-shadow(0 8px 16px rgba(6, 95, 70, 0.35));
+  animation: floatLogo 3.6s ease-in-out infinite;
+  filter: drop-shadow(0 10px 18px rgba(6, 95, 70, 0.35));
+  position: relative;
+  z-index: 2;
 }
 
-.logo-glow {
+.logo-glow-ring {
   position: absolute;
-  inset: 0;
+  inset: -6px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.25) 0%, transparent 70%);
-  animation: pulseGlow 3s infinite;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.35) 0%, transparent 70%);
+  animation: pulseGlow 2.8s infinite ease-in-out;
 }
 
 .login-brand h2 {
   font-family: 'Outfit', sans-serif;
-  font-size: 1.4rem;
+  font-size: 1.55rem;
   font-weight: 800;
   color: var(--slate-900);
+  margin-top: 4px;
 }
 
 .login-brand p {
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   color: var(--slate-500);
   margin-top: 4px;
 }
@@ -1185,47 +1253,109 @@ tbody tr:hover {
 .badge-municipal {
   display: inline-block;
   background: var(--primary-100);
-  color: var(--primary-800);
-  padding: 3px 10px;
+  color: var(--primary-900);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Banner de Credenciales */
+.admin-credentials-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border: 1px solid #a7f3d0;
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  margin: 18px 0 6px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.admin-credentials-banner:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+  border-color: #34d399;
+}
+
+.banner-icon {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.banner-text small {
+  display: block;
+  font-size: 0.68rem;
+  color: #065f46;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.banner-text strong {
+  display: block;
+  font-size: 0.8rem;
+  color: #047857;
+  font-family: monospace;
+}
+
+.banner-text code {
+  background: #ffffff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid #6ee7b7;
+  color: #064e3b;
+  font-weight: 800;
+}
+
+.btn-autofill-pill {
+  background: #059669;
+  color: #ffffff;
+  padding: 5px 10px;
   border-radius: var(--radius-full);
   font-size: 0.68rem;
   font-weight: 700;
-  margin-top: 8px;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.3);
 }
 
 .login-form {
-  margin-top: 24px;
+  margin-top: 18px;
   text-align: left;
 }
 
-.input-group {
-  margin-bottom: 16px;
+.input-field-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
-.input-group label {
-  display: block;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--slate-600);
-  margin-bottom: 6px;
+.field-icon {
+  position: absolute;
+  left: 14px;
+  width: 18px;
+  height: 18px;
+  color: var(--slate-400);
+  pointer-events: none;
 }
 
-.input-group input {
-  width: 100%;
-  height: 44px;
-  padding: 0 14px;
-  border: 1px solid var(--slate-300);
-  border-radius: var(--radius-md);
-  font-size: 0.85rem;
+.input-field-wrap input {
+  padding-left: 44px !important;
 }
 
 .login-divider {
   display: flex;
   align-items: center;
   text-align: center;
-  margin: 20px 0;
+  margin: 20px 0 16px;
   color: var(--slate-400);
   font-size: 0.72rem;
+  font-weight: 600;
 }
 
 .login-divider::before, .login-divider::after {
@@ -1247,8 +1377,8 @@ tbody tr:hover {
 .quick-role-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
+  gap: 10px;
+  padding: 10px 12px;
   background: var(--slate-50);
   border: 1px solid var(--slate-200);
   border-radius: var(--radius-md);
@@ -1259,30 +1389,72 @@ tbody tr:hover {
 .quick-role-btn:hover {
   background: var(--primary-50);
   border-color: var(--primary-300);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.quick-role-btn.highlight {
+  border-color: #a7f3d0;
+  background: #f0fdf4;
 }
 
 .quick-role-btn .role-icon {
-  font-size: 1.2rem;
+  font-size: 1.3rem;
 }
 
 .quick-role-btn strong {
   display: block;
-  font-size: 0.72rem;
+  font-size: 0.76rem;
   color: var(--slate-800);
 }
 
 .quick-role-btn small {
   display: block;
-  font-size: 0.62rem;
+  font-size: 0.65rem;
   color: var(--slate-500);
 }
 
 .login-footer {
-  margin-top: 20px;
+  margin-top: 22px;
   font-size: 0.72rem;
   color: var(--slate-500);
 }
+
+.pulse-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: #10b981;
+  border-radius: 50%;
+  margin-right: 6px;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+}
+
+/* Logout Button */
+.danger-hover {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 0 12px !important;
+  width: auto !important;
+  color: #ef4444 !important;
+  background: #fef2f2 !important;
+  border: 1px solid #fee2e2 !important;
+  font-weight: 700 !important;
+  font-size: 0.75rem !important;
+  transition: all 0.2s ease !important;
+}
+
+.danger-hover:hover {
+  background: #fee2e2 !important;
+  color: #b91c1c !important;
+  border-color: #fca5a5 !important;
+}
+
+.logout-label {
+  display: inline-block;
+}
+
 
 /* =========================================================
    USER ROLES & SUMMARY
