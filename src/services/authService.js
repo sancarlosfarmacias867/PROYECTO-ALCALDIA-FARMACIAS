@@ -20,12 +20,25 @@ export const DEFAULT_USERS = [
   { id: "U-08", name: "Diego Lima", email: "diego.2agosto@sancarlos.gob.bo", pin: "admin123", role: "vendedor", branch_id: "2-agosto", active: true },
 ];
 
+export function sanitizeUserName(name) {
+  if (!name) return "";
+  return name
+    .replace(/\ufffd/g, "")
+    .replace(/Carla M\?*ndez|Carla Mndez/gi, "Carla Méndez")
+    .replace(/Jos\?* Vaca|Jos Vaca/gi, "José Vaca")
+    .replace(/Mar\?*a Aguilera|Mara Aguilera/gi, "María Aguilera")
+    .replace(/Rosa Su\?*rez|Rosa Surez/gi, "Rosa Suárez");
+}
+
 export function initAuth() {
   try {
     if (typeof localStorage !== "undefined") {
       const saved = localStorage.getItem(AUTH_KEY);
       if (saved) {
         currentUser = JSON.parse(saved);
+        if (currentUser && currentUser.name) {
+          currentUser.name = sanitizeUserName(currentUser.name);
+        }
       } else {
         currentUser = null;
       }
@@ -87,6 +100,7 @@ export async function login(identifier, pin) {
           });
         } catch (_) {}
 
+        matched.name = sanitizeUserName(matched.name);
         currentUser = matched;
         if (typeof localStorage !== "undefined") {
           localStorage.setItem(AUTH_KEY, JSON.stringify(matched));

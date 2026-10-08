@@ -41,6 +41,7 @@
       <symbol id="i-crown" viewBox="0 0 24 24"><path d="m2 4 3 12h14l3-12-5 6-5-6-5 6-5-6z"/></symbol>
       <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
       <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22"/></symbol>
+      <symbol id="i-mail" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></symbol>
     </svg>
 
     <!-- Portal Oficial e Institucional de Acceso -->
@@ -272,50 +273,136 @@
       <div class="drawer-heading"><div><span class="eyebrow">PRIORIDAD</span><h2>Alertas de vencimiento</h2></div><button class="icon-button" id="closeAlerts" aria-label="Cerrar alertas"><svg><use href="#i-close"/></svg></button></div><div id="drawerAlerts"></div>
     </aside>
 
-    <dialog id="userDialog">
-      <form method="dialog" id="userForm">
-        <div class="dialog-heading">
-          <div>
-            <span class="eyebrow" id="userDialogEyebrow">GESTIÓN DE PERSONAL</span>
-            <h2 id="userDialogTitle">Crear nuevo usuario</h2>
+    <dialog id="userDialog" class="official-modal">
+      <form method="dialog" id="userForm" class="official-modal-form">
+        <div class="official-modal-header">
+          <div class="official-modal-title-wrap">
+            <div class="official-modal-icon">
+              <svg><use href="#i-shield"/></svg>
+            </div>
+            <div>
+              <span class="official-modal-badge" id="userDialogEyebrow">GESTIÓN DE PERSONAL MUNICIPAL</span>
+              <h2 id="userDialogTitle">Crear nuevo funcionario</h2>
+              <p class="official-modal-subtitle" id="userDialogSubtitle">Asigne la identidad institucional, credenciales de acceso, rol y sucursal autorizada.</p>
+            </div>
           </div>
-          <button type="button" class="icon-button" data-close-user aria-label="Cerrar"><svg><use href="#i-close"/></svg></button>
+          <button type="button" class="official-modal-close" data-close-user aria-label="Cerrar ventana">
+            <svg><use href="#i-close"/></svg>
+          </button>
         </div>
-        <div class="dialog-body">
+
+        <div class="official-modal-body">
           <input type="hidden" name="userId" id="userEditId" />
-          <label>
-            <span>Nombre completo del funcionario</span>
-            <input name="name" id="userFormName" required placeholder="Ej: Carlos Rivero" />
-          </label>
-          <label>
-            <span>Usuario o Correo Institucional</span>
-            <input name="email" id="userFormEmail" required placeholder="Ej: carlos.tecnico o carlos@sancarlos.gob.bo" />
-          </label>
-          <label>
-            <span>Contraseña / PIN de Acceso</span>
-            <input name="pin" id="userFormPin" required placeholder="Mínimo 4 caracteres (Ej: admin123)" minlength="4" />
-          </label>
-          <label>
-            <span>Rol y nivel de permisos</span>
-            <select name="role" id="userFormRole" required>
-              <option value="vendedor">Vendedor(a) / Dispensación SUS</option>
-              <option value="tecnico">Técnico Farmacéutico</option>
-              <option value="admin">Administrador General</option>
-            </select>
-          </label>
-          <label class="full-width">
-            <span>Sucursal asignada (Fijada por Administración)</span>
-            <select name="branch" id="userBranch" required></select>
-            <small style="color: var(--slate-500); font-size: 0.72rem; margin-top: 4px;">
-              El funcionario operará exclusivamente en la sucursal designada por la administración.
-            </small>
-          </label>
+
+          <div class="modal-form-grid">
+            <div class="modal-form-group">
+              <label for="userFormName">
+                <span>Nombre completo del funcionario</span>
+                <span class="required-indicator">*</span>
+              </label>
+              <div class="official-input-wrap">
+                <svg class="official-input-icon"><use href="#i-users"/></svg>
+                <input
+                  type="text"
+                  name="name"
+                  id="userFormName"
+                  class="official-input"
+                  required
+                  placeholder="Ej: Lic. Carlos Rivero"
+                  autocomplete="name"
+                />
+              </div>
+            </div>
+
+            <div class="modal-form-group">
+              <label for="userFormEmail">
+                <span>Usuario o correo institucional</span>
+                <span class="required-indicator">*</span>
+              </label>
+              <div class="official-input-wrap">
+                <svg class="official-input-icon"><use href="#i-mail"/></svg>
+                <input
+                  type="text"
+                  name="email"
+                  id="userFormEmail"
+                  class="official-input"
+                  required
+                  placeholder="Ej: carlos.tecnico o carlos@sancarlos.gob.bo"
+                  autocomplete="username"
+                  spellcheck="false"
+                />
+              </div>
+            </div>
+
+            <div class="modal-form-group">
+              <label for="userFormPin">
+                <span id="userFormPinLabel">Contraseña institucional</span>
+                <span class="required-indicator" id="pinRequiredStar">*</span>
+              </label>
+              <div class="official-input-wrap">
+                <svg class="official-input-icon"><use href="#i-lock"/></svg>
+                <input
+                  type="password"
+                  name="pin"
+                  id="userFormPin"
+                  class="official-input"
+                  placeholder="Mínimo 4 caracteres (Ej: admin123)"
+                  minlength="4"
+                  autocomplete="new-password"
+                />
+                <button
+                  type="button"
+                  class="btn-toggle-password"
+                  id="toggleUserPinBtn"
+                  aria-label="Ver u ocultar contraseña"
+                  title="Ver u ocultar contraseña"
+                >
+                  <svg id="userPinEyeIcon"><use href="#i-eye"/></svg>
+                </button>
+              </div>
+              <small class="field-hint" id="pinFieldHint">Mínimo 4 caracteres. Usada para ingresar al sistema.</small>
+            </div>
+
+            <div class="modal-form-group">
+              <label for="userFormRole">
+                <span>Rol y nivel de permisos</span>
+                <span class="required-indicator">*</span>
+              </label>
+              <div class="official-input-wrap">
+                <svg class="official-input-icon"><use href="#i-shield"/></svg>
+                <select name="role" id="userFormRole" class="official-input official-select" required>
+                  <option value="vendedor">Vendedor(a) / Dispensación SUS</option>
+                  <option value="tecnico">Técnico Farmacéutico</option>
+                  <option value="admin">Administrador General</option>
+                </select>
+              </div>
+              <small class="field-hint">Define las funciones operativas habilitadas.</small>
+            </div>
+
+            <div class="modal-form-group full-width">
+              <label for="userBranch">
+                <span>Sucursal municipal asignada</span>
+                <span class="required-indicator">*</span>
+              </label>
+              <div class="official-input-wrap">
+                <svg class="official-input-icon"><use href="#i-store"/></svg>
+                <select name="branch" id="userBranch" class="official-input official-select" required></select>
+              </div>
+              <div class="modal-security-note">
+                <svg><use href="#i-lock"/></svg>
+                <span>
+                  <strong>Aseguramiento de trazabilidad:</strong> El funcionario operará exclusivamente en la sucursal designada por la administración.
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="dialog-actions">
-          <button type="button" class="button secondary" data-close-user>Cancelar</button>
-          <button type="submit" class="button primary" id="userSubmitBtn">
+
+        <div class="official-modal-footer">
+          <button type="button" class="btn-official-cancel" data-close-user>Cancelar</button>
+          <button type="submit" class="btn-official-submit-modal" id="userSubmitBtn">
             <svg><use href="#i-check"/></svg>
-            <span id="userSubmitText">Guardar usuario</span>
+            <span id="userSubmitText">Guardar funcionario</span>
           </button>
         </div>
       </form>
@@ -342,6 +429,6 @@
     </dialog>
 
     <div class="toast" id="toast" role="status" aria-live="polite"><span><svg><use href="#i-check"/></svg></span><div><strong id="toastTitle">Listo</strong><p id="toastMessage"></p></div></div>
-    <script type="module" src="/src/js/app.js?v=10"></script>
+    <script type="module" src="/src/js/app.js?v=11"></script>
   </body>
 </html>

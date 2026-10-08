@@ -7,14 +7,27 @@ import { showToast } from "./toastService.js";
 
 const USERS_CACHE_KEY = "farmacias_custom_users";
 
+function sanitizeUser(u) {
+  if (!u) return u;
+  let name = u.name || "";
+  name = name
+    .replace(/\ufffd/g, "")
+    .replace(/Carla M\?*ndez|Carla Mndez/gi, "Carla Méndez")
+    .replace(/Jos\?* Vaca|Jos Vaca/gi, "José Vaca")
+    .replace(/Mar\?*a Aguilera|Mara Aguilera/gi, "María Aguilera")
+    .replace(/Rosa Su\?*rez|Rosa Surez/gi, "Rosa Suárez");
+  return { ...u, name };
+}
+
 export async function getUsers() {
   try {
     const data = await supabaseQuery("app_users?select=*&order=name.asc");
     if (data && data.length > 0) {
+      const sanitized = data.map(sanitizeUser);
       try {
-        localStorage.setItem(USERS_CACHE_KEY, JSON.stringify(data));
+        localStorage.setItem(USERS_CACHE_KEY, JSON.stringify(sanitized));
       } catch (_) {}
-      return data;
+      return sanitized;
     }
   } catch (err) {
     console.error("Error al obtener usuarios de Supabase:", err);
@@ -22,7 +35,10 @@ export async function getUsers() {
 
   try {
     const cached = localStorage.getItem(USERS_CACHE_KEY);
-    if (cached) return JSON.parse(cached);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      return parsed.map(sanitizeUser);
+    }
   } catch (_) {}
   return [];
 }
