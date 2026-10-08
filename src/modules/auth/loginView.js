@@ -1,5 +1,6 @@
 /**
- * Módulo de Login y Autenticación - Rediseño Elegante
+ * Módulo de Login Oficial e Institucional
+ * Gobierno Autónomo Municipal de San Carlos
  */
 import { login, getCurrentUser, logout, getRoleLabel } from "../../services/authService.js";
 import { showToast } from "../../services/toastService.js";
@@ -26,152 +27,105 @@ export function renderLoginOverlay() {
   overlay.style.display = "flex";
 
   overlay.innerHTML = `
-    <div class="login-backdrop-animated">
-      <div class="glow-orb orb-1"></div>
-      <div class="glow-orb orb-2"></div>
-      <div class="glow-orb orb-3"></div>
-    </div>
+    <div class="login-background-photo"></div>
+    <div class="login-backdrop-dark"></div>
 
-    <div class="login-card">
-      <!-- Encabezado con Logo Municipal -->
-      <div class="login-brand">
-        <div class="brand-floating-logo">
-          <div class="logo-glow-ring"></div>
-          <img src="/assets/logo-san-carlos.png" alt="Escudo del Municipio de San Carlos" class="floating-logo-img" />
+    <div class="login-card-official">
+      <!-- Escudo y Encabezado Institucional -->
+      <div class="official-header">
+        <div class="official-shield-container">
+          <div class="shield-aura"></div>
+          <img src="/assets/logo-san-carlos.png" alt="Escudo Oficial del Municipio de San Carlos" class="official-shield-img" />
         </div>
-        <span class="badge-municipal">SISTEMA INTEGRAL DE SALUD</span>
-        <h1 class="login-title">Farmacias Municipales</h1>
-        <p class="login-subtitle">Gobierno Autónomo Municipal de San Carlos</p>
+        <span class="badge-governmental">GOBIERNO AUTÓNOMO MUNICIPAL DE SAN CARLOS</span>
+        <h1 class="official-title">Red Municipal de Farmacias</h1>
+        <p class="official-subtitle">Sistema de Control de Inventario, Ventas y Entregas SUS</p>
       </div>
 
-      <!-- Credenciales de Administrador -->
-      <div class="credentials-box" id="btnAutofillAdmin" role="button" tabindex="0" title="Clic para cargar credenciales de Administrador">
-        <div class="credentials-badge">
-          <svg class="cred-icon"><use href="#i-key"/></svg>
+      <div class="security-banner">
+        <svg class="security-icon"><use href="#i-shield"/></svg>
+        <div>
+          <strong>PORTAL INSTITUCIONAL SEGURO</strong>
+          <small>Acceso restringido únicamente a funcionarios autorizados</small>
         </div>
-        <div class="credentials-info">
-          <span class="cred-caption">Acceso Administrador Configurado</span>
-          <div class="cred-values">
-            <span>Usuario: <b>admin</b></span>
-            <span class="cred-sep">·</span>
-            <span>Clave: <b>admin123</b></span>
-          </div>
-        </div>
-        <button type="button" class="btn-fill-pill">
-          <span>Rellenar</span>
-        </button>
       </div>
 
-      <!-- Formulario de Inicio de Sesión -->
-      <form id="mainLoginForm" class="login-form">
-        <div class="form-group">
+      <!-- Formulario de Acceso Oficial -->
+      <form id="mainLoginForm" class="official-form">
+        <div class="official-form-group">
           <label for="loginEmail">Usuario o Correo Institucional</label>
-          <div class="input-wrapper">
-            <svg class="input-icon"><use href="#i-users"/></svg>
+          <div class="official-input-wrap">
+            <svg class="official-input-icon"><use href="#i-users"/></svg>
             <input 
               type="text" 
               id="loginEmail" 
-              class="form-input" 
+              class="official-input" 
               required 
-              placeholder="Ej.: admin" 
-              value="admin" 
+              placeholder="Ingrese su usuario o correo" 
               autocomplete="username" 
+              autofocus
             />
           </div>
         </div>
 
-        <div class="form-group">
-          <label for="loginPin">Contraseña o PIN</label>
-          <div class="input-wrapper">
-            <svg class="input-icon"><use href="#i-lock"/></svg>
+        <div class="official-form-group">
+          <label for="loginPin">Contraseña o PIN de Seguridad</label>
+          <div class="official-input-wrap">
+            <svg class="official-input-icon"><use href="#i-lock"/></svg>
             <input 
               type="password" 
               id="loginPin" 
-              class="form-input" 
+              class="official-input" 
               required 
-              placeholder="••••••••" 
-              value="admin123" 
+              placeholder="Ingrese su contraseña" 
               autocomplete="current-password" 
             />
+            <button type="button" class="btn-toggle-password" id="togglePasswordBtn" aria-label="Mostrar u ocultar contraseña">
+              <svg id="eyeIconOpen"><use href="#i-eye"/></svg>
+              <svg id="eyeIconClosed" class="hidden"><use href="#i-eye-off"/></svg>
+            </button>
           </div>
         </div>
 
-        <button type="submit" id="loginSubmitBtn" class="btn-primary-glow">
-          <span>Ingresar al Sistema</span>
-          <svg class="btn-arrow" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        <button type="submit" id="loginSubmitBtn" class="btn-official-submit">
+          <svg class="submit-lock-icon"><use href="#i-lock"/></svg>
+          <span id="submitBtnText">Ingresar al Sistema</span>
         </button>
       </form>
 
-      <!-- Divisor -->
-      <div class="login-divider">
-        <span class="divider-line"></span>
-        <span class="divider-text">Acceso rápido por perfil</span>
-        <span class="divider-line"></span>
-      </div>
-
-      <!-- Roles Rápidos -->
-      <div class="roles-selection-grid">
-        <button type="button" class="role-btn-card is-admin" data-user="admin" data-pin="admin123">
-          <div class="role-avatar admin-avatar">
-            <svg><use href="#i-crown"/></svg>
-          </div>
-          <div class="role-meta">
-            <strong>Administrador</strong>
-            <small>Gestión y usuarios</small>
-          </div>
-        </button>
-
-        <button type="button" class="role-btn-card" data-user="carlos.tecnico@sancarlos.gob.bo" data-pin="admin123">
-          <div class="role-avatar tech-avatar">
-            <svg><use href="#i-box"/></svg>
-          </div>
-          <div class="role-meta">
-            <strong>Técnico</strong>
-            <small>Ingreso de lotes</small>
-          </div>
-        </button>
-
-        <button type="button" class="role-btn-card" data-user="ana.santafe@sancarlos.gob.bo" data-pin="admin123">
-          <div class="role-avatar seller-avatar">
-            <svg><use href="#i-cart"/></svg>
-          </div>
-          <div class="role-meta">
-            <strong>Vendedora</strong>
-            <small>Sucursal Santa Fe</small>
-          </div>
-        </button>
-
-        <button type="button" class="role-btn-card" data-user="jose.sancarlos@sancarlos.gob.bo" data-pin="admin123">
-          <div class="role-avatar seller-avatar">
-            <svg><use href="#i-store"/></svg>
-          </div>
-          <div class="role-meta">
-            <strong>Vendedor</strong>
-            <small>Sucursal Central</small>
-          </div>
-        </button>
-      </div>
-
-      <!-- Pie de página con estado -->
-      <div class="login-status-footer">
-        <span class="status-indicator-dot"></span>
-        <span>Conexión activa con Supabase PostgreSQL</span>
+      <!-- Pie Institucional -->
+      <div class="official-card-footer">
+        <div class="db-status-pill">
+          <span class="pulse-indicator"></span>
+          <span>Base de Datos Supabase (PostgreSQL 17) · Activa</span>
+        </div>
+        <p class="copyright-legal">
+          Dirección Municipal de Salud · San Carlos, Santa Cruz, Bolivia
+        </p>
       </div>
     </div>
   `;
 
-  // Autocompletar credenciales de admin
-  document.getElementById("btnAutofillAdmin")?.addEventListener("click", () => {
-    const emailInput = document.getElementById("loginEmail");
-    const pinInput = document.getElementById("loginPin");
-    if (emailInput) emailInput.value = "admin";
-    if (pinInput) pinInput.value = "admin123";
-    showToast("Credenciales cargadas", "Usuario: admin | Clave: admin123", "success");
+  // Toggle de Contraseña visible / oculta
+  const toggleBtn = document.getElementById("togglePasswordBtn");
+  const pinInput = document.getElementById("loginPin");
+  const eyeOpen = document.getElementById("eyeIconOpen");
+  const eyeClosed = document.getElementById("eyeIconClosed");
+
+  toggleBtn?.addEventListener("click", () => {
+    if (!pinInput) return;
+    const isPassword = pinInput.type === "password";
+    pinInput.type = isPassword ? "text" : "password";
+    if (eyeOpen && eyeClosed) {
+      eyeOpen.classList.toggle("hidden", isPassword);
+      eyeClosed.classList.toggle("hidden", !isPassword);
+    }
   });
 
   // Envío del Formulario
   const form = document.getElementById("mainLoginForm");
   const submitBtn = document.getElementById("loginSubmitBtn");
+  const submitText = document.getElementById("submitBtnText");
 
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -179,10 +133,10 @@ export function renderLoginOverlay() {
     const pin = document.getElementById("loginPin").value;
 
     try {
-      if (submitBtn) {
+      if (submitBtn && submitText) {
         submitBtn.disabled = true;
         submitBtn.classList.add("loading");
-        submitBtn.innerHTML = `<span>Verificando credenciales...</span>`;
+        submitText.textContent = "Verificando credenciales...";
       }
 
       await login(email, pin);
@@ -190,30 +144,14 @@ export function renderLoginOverlay() {
       overlay.style.display = "none";
       document.body.classList.remove("logged-out");
     } catch (err) {
-      showToast("Error de Acceso", err.message, "error");
+      showToast("Acceso Denegado", err.message, "error");
     } finally {
-      if (submitBtn) {
+      if (submitBtn && submitText) {
         submitBtn.disabled = false;
         submitBtn.classList.remove("loading");
-        submitBtn.innerHTML = `<span>Ingresar al Sistema</span><svg class="btn-arrow" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>`;
+        submitText.textContent = "Ingresar al Sistema";
       }
     }
-  });
-
-  // Botones de roles rápidos
-  overlay.querySelectorAll(".role-btn-card").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const user = btn.getAttribute("data-user");
-      const pin = btn.getAttribute("data-pin") || "admin123";
-      try {
-        await login(user, pin);
-        overlay.classList.remove("active");
-        overlay.style.display = "none";
-        document.body.classList.remove("logged-out");
-      } catch (err) {
-        showToast("Error", err.message, "error");
-      }
-    });
   });
 }
 
@@ -225,8 +163,8 @@ export function updateNavbarProfile() {
   const roleSelect = document.getElementById("roleSelect");
 
   if (!user) {
-    if (profileName) profileName.textContent = "Iniciar Sesión";
-    if (profileRole) profileRole.textContent = "Sin autenticar";
+    if (profileName) profileName.textContent = "Sin sesión";
+    if (profileRole) profileRole.textContent = "Acceso restringido";
     if (profileAvatar) profileAvatar.textContent = "--";
     renderLoginOverlay();
     return;
@@ -261,7 +199,7 @@ function ensureLogoutButton() {
     `;
 
     logoutBtn.addEventListener("click", () => {
-      if (confirm("¿Deseas cerrar tu sesión?")) {
+      if (confirm("¿Deseas cerrar tu sesión del sistema?")) {
         logout();
       }
     });
