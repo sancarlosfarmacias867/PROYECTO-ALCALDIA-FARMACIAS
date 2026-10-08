@@ -17,33 +17,51 @@ export async function renderRestockModule(selectedBranchId = "all") {
   const branchSelect = document.getElementById("entryBranch");
   const branchLabel = document.getElementById("entryBranchLabel");
   const user = getCurrentUser();
+  const isUserAdmin = isAdmin();
 
   cachedBranches = await getBranches();
 
-  const isRestricted = user?.role !== "admin" && user?.branch_id !== "all";
+  // Si no es admin, SIEMPRE forzar a su sucursal asignada
+  const isRestricted = !isUserAdmin && user?.branch_id !== "all";
   currentTargetBranch = isRestricted ? user.branch_id : selectedBranchId;
 
-  // 1. Selector de sucursal en el formulario
+  // 1. Panel de KPIs: Solo visible para el Administrador
+  const kpiGrid = document.querySelector(".entries-kpi-grid");
+  if (kpiGrid) {
+    kpiGrid.style.display = isUserAdmin ? "grid" : "none";
+  }
+
+  // 2. Control del Selector de Sucursal en Formulario: Solo visible para el Administrador
+  const branchGroup = document.getElementById("entryBranchGroup");
+  const section1Grid = document.querySelector(".entry-grid-section-1");
+
+  if (branchGroup) {
+    branchGroup.style.display = isUserAdmin ? "" : "none";
+  }
+
+  if (section1Grid) {
+    section1Grid.classList.toggle("technician-mode", !isUserAdmin);
+  }
+
   if (branchSelect) {
-    if (isRestricted) {
-      const userBranch = cachedBranches.find((b) => b.id === user.branch_id) || cachedBranches[0];
-      branchSelect.innerHTML = `<option value="${userBranch.id}">${userBranch.name} (${userBranch.code})</option>`;
-      branchSelect.value = userBranch.id;
-      branchSelect.disabled = true;
-      const hint = document.getElementById("entryBranchHint");
-      if (hint) hint.textContent = "Sucursal fijada según su asignación oficial";
-    } else {
+    if (isUserAdmin) {
       branchSelect.disabled = false;
+      const targetOption = currentTargetBranch !== "all" ? currentTargetBranch : cachedBranches[0]?.id;
       branchSelect.innerHTML = cachedBranches
         .map(
           (b) =>
-            `<option value="${b.id}" ${b.id === currentTargetBranch ? "selected" : ""}>${b.name} (${b.code})</option>`
+            `<option value="${b.id}" ${b.id === targetOption ? "selected" : ""}>${b.name} (${b.code})</option>`
         )
         .join("");
+    } else {
+      const userBranchId = user?.branch_id || cachedBranches[0]?.id;
+      branchSelect.innerHTML = `<option value="${userBranchId}" selected>${getBranchName(userBranchId, cachedBranches)}</option>`;
+      branchSelect.value = userBranchId;
+      branchSelect.disabled = true;
     }
   }
 
-  // 2. Etiqueta superior de contexto
+  // 3. Etiqueta superior de contexto (pill)
   if (branchLabel) {
     branchLabel.textContent = isRestricted
       ? getBranchName(user.branch_id, cachedBranches)
@@ -52,26 +70,26 @@ export async function renderRestockModule(selectedBranchId = "all") {
       : getBranchName(currentTargetBranch, cachedBranches);
   }
 
-  // 3. Establecer fecha de hoy por defecto si está vacía
+  // 4. Establecer fecha de hoy por defecto si está vacía
   const entryDateInput = document.getElementById("entryDate");
   if (entryDateInput && !entryDateInput.value) {
     entryDateInput.value = new Date().toISOString().slice(0, 10);
   }
 
-  // 4. Adaptar permisos de rol (Margen para Admin, Nota para Técnico)
+  // 5. Adaptar permisos de rol (Margen para Admin, Nota para Técnico)
   const marginGroup = document.getElementById("entryMarginGroup");
   const pricingNote = document.querySelector(".technician-only.pricing-pending-note");
   if (marginGroup) {
-    marginGroup.style.display = isAdmin() ? "flex" : "none";
+    marginGroup.style.display = isUserAdmin ? "flex" : "none";
   }
   if (pricingNote) {
-    pricingNote.style.display = isTechnician() ? "flex" : "none";
+    pricingNote.style.display = !isUserAdmin ? "flex" : "none";
   }
 
-  // 5. Cargar ingresos históricos y calcular KPIs
+  // 6. Cargar ingresos históricos y calcular KPIs
   await loadAndRenderEntries();
 
-  // 6. Recalcular valores en vivo del formulario
+  // 7. Recalcular valores en vivo del formulario
   updateLiveCalculations();
 }
 
@@ -363,7 +381,7 @@ export function initRestockEvents() {
       const entryDate = formData.get("entryDate");
       const expiry = formData.get("expiry");
       const supplier = formData.get("supplier") || "Distribuidora Municipal Central";
-      const invoiceNumber = formData.get("invoiceNumber") || "";
+      const invoiceNumber = "";
 
       // Validar que la fecha de vencimiento sea futura
       if (new Date(expiry) <= new Date()) {

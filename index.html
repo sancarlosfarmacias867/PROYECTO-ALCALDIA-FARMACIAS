@@ -243,8 +243,8 @@
               </span>
             </div>
 
-            <!-- KPI Cards de Ingresos -->
-            <div class="entries-kpi-grid">
+            <!-- KPI Cards de Ingresos (Solo Administrador) -->
+            <div class="entries-kpi-grid admin-only">
               <div class="entry-kpi-card">
                 <div class="entry-kpi-icon emerald">
                   <svg><use href="#i-box"/></svg>
@@ -315,7 +315,7 @@
                     <span class="section-number">1</span>
                     <h3>Identificación del Producto y Destino</h3>
                   </div>
-                  <div class="entry-grid-3">
+                  <div class="entry-grid-3 entry-grid-section-1">
                     <div class="entry-form-group">
                       <label for="entryName">
                         <span>Nombre del medicamento</span>
@@ -340,14 +340,14 @@
                       <small class="field-hint">Código único impreso en el envase</small>
                     </div>
 
-                    <div class="entry-form-group">
+                    <div class="entry-form-group admin-only" id="entryBranchGroup">
                       <label for="entryBranch">
                         <span>Farmacia receptora</span>
                         <span class="req">*</span>
                       </label>
                       <div class="official-input-wrap">
                         <svg class="official-input-icon"><use href="#i-store"/></svg>
-                        <select id="entryBranch" name="branch" class="official-input official-select" required></select>
+                        <select id="entryBranch" name="branch" class="official-input official-select"></select>
                       </div>
                       <small class="field-hint" id="entryBranchHint">Sucursal donde ingresará el lote</small>
                     </div>
@@ -440,13 +440,13 @@
                   </div>
                 </div>
 
-                <!-- SECCIÓN 3: Fechas, Proveedor y Documentación -->
+                <!-- SECCIÓN 3: Fechas, Proveedor y Control -->
                 <div class="entry-section">
                   <div class="section-title-wrap">
                     <span class="section-number">3</span>
                     <h3>Fechas de Control, Vencimiento y Proveedor</h3>
                   </div>
-                  <div class="entry-grid-4">
+                  <div class="entry-grid-3">
                     <div class="entry-form-group">
                       <label for="entryDate">
                         <span>Fecha de ingreso</span>
@@ -478,17 +478,6 @@
                         <input id="entrySupplier" name="supplier" class="official-input" value="Distribuidora Municipal Central" placeholder="Distribuidora o laboratorio" />
                       </div>
                       <small class="field-hint">Origen o distribuidor del medicamento</small>
-                    </div>
-
-                    <div class="entry-form-group">
-                      <label for="entryInvoice">
-                        <span>N.º Factura o Remisión</span>
-                      </label>
-                      <div class="official-input-wrap">
-                        <svg class="official-input-icon"><use href="#i-download"/></svg>
-                        <input id="entryInvoice" name="invoiceNumber" class="official-input font-mono" placeholder="Ej.: FAC-2026-894" />
-                      </div>
-                      <small class="field-hint">Para control contable y auditoría</small>
                     </div>
                   </div>
                 </div>

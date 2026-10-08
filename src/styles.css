@@ -2982,6 +2982,10 @@ dialog[open] {
   gap: 18px;
 }
 
+.entry-grid-section-1.technician-mode {
+  grid-template-columns: 1fr 1fr !important;
+}
+
 .entry-grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
