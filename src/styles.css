@@ -1161,17 +1161,17 @@ body.logged-out .app-shell {
   transform: scale(1.0);
 }
 
-/* Degradado suave y cinematográfico para apreciar la foto real de San Carlos */
+/* Degradado verde municipal institucional para dar identidad sin ocultar la foto real */
 .login-bg-overlay {
   position: absolute;
   inset: 0;
   background: linear-gradient(
     180deg,
-    rgba(15, 23, 42, 0.45) 0%,
-    rgba(6, 44, 32, 0.25) 45%,
-    rgba(15, 23, 42, 0.58) 100%
+    rgba(6, 78, 59, 0.42) 0%,
+    rgba(4, 52, 38, 0.28) 45%,
+    rgba(6, 44, 32, 0.55) 100%
   );
-  backdrop-filter: blur(1px);
+  backdrop-filter: blur(1.5px);
 }
 
 /* Tarjeta Oficial de Acceso */
@@ -1189,11 +1189,23 @@ body.logged-out .app-shell {
   text-align: center;
   animation: scaleIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  transform-origin: center center;
 }
 
 @keyframes scaleIn {
   from { opacity: 0; transform: scale(0.95) translateY(12px); }
   to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Animación de vibración / sacudida cuando se equivocan */
+@keyframes shakeError {
+  0%, 100% { transform: translateX(0); }
+  15%, 45%, 75% { transform: translateX(-9px); }
+  30%, 60%, 90% { transform: translateX(9px); }
+}
+
+.login-card-official.shake-error {
+  animation: shakeError 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 
 .official-header {
@@ -1258,7 +1270,7 @@ body.logged-out .app-shell {
   margin-bottom: 0;
 }
 
-/* Banner de Seguridad */
+/* Banner de Seguridad Normal */
 .security-banner {
   display: flex;
   align-items: center;
@@ -1291,6 +1303,46 @@ body.logged-out .app-shell {
   font-size: 0.64rem;
   color: #64748b;
   margin-top: 1px;
+}
+
+/* Banner de Advertencia de Seguridad en Rojo */
+.security-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fef2f2;
+  border: 1.5px solid #fecaca;
+  border-radius: 12px;
+  padding: 9px 12px;
+  margin-bottom: 18px;
+  text-align: left;
+  animation: fadeIn 0.25s ease;
+}
+
+.security-error-icon {
+  width: 20px;
+  height: 20px;
+  color: #dc2626;
+  flex-shrink: 0;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+}
+
+.security-error-banner strong {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #991b1b;
+  letter-spacing: 0.04em;
+}
+
+.security-error-banner small {
+  display: block;
+  font-size: 0.65rem;
+  color: #b91c1c;
+  margin-top: 1px;
+  line-height: 1.35;
 }
 
 /* Formulario */
@@ -1429,6 +1481,13 @@ body.logged-out .app-shell {
 .btn-official-submit.loading {
   opacity: 0.8;
   pointer-events: none;
+}
+
+.btn-official-submit.is-locked {
+  background: #64748b !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+  opacity: 0.9;
 }
 
 .submit-lock-icon {

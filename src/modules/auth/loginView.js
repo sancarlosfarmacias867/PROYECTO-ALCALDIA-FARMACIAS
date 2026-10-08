@@ -1,9 +1,28 @@
 /**
- * Módulo de Login Oficial e Institucional
+ * Módulo de Login Oficial e Institucional con Seguridad Progresiva
  * Gobierno Autónomo Municipal de San Carlos
  */
 import { login, getCurrentUser, logout, getRoleLabel } from "../../services/authService.js";
 import { showToast } from "../../services/toastService.js";
+
+const LOCK_KEY = "farmacias_security_lockout_v1";
+let countdownInterval = null;
+
+function getLockState() {
+  try {
+    const saved = localStorage.getItem(LOCK_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch (_) {}
+  return { attempts: 0, lockTier: 0, lockedUntil: 0 };
+}
+
+function saveLockState(state) {
+  localStorage.setItem(LOCK_KEY, JSON.stringify(state));
+}
+
+function clearLockState() {
+  localStorage.removeItem(LOCK_KEY);
+}
 
 export function renderLoginOverlay() {
   let overlay = document.getElementById("loginOverlay");
@@ -27,7 +46,7 @@ export function renderLoginOverlay() {
   overlay.style.display = "flex";
 
   overlay.innerHTML = `
-    <!-- Capas de fondo con imagen panorámica visible -->
+    <!-- Capas de fondo con imagen panorámica y degradado verde institucional -->
     <div class="login-bg-wrapper">
       <div class="login-bg-photo"></div>
       <div class="login-bg-overlay"></div>
@@ -46,11 +65,23 @@ export function renderLoginOverlay() {
         <p class="official-subtitle">Sistema Integrado de Farmacias y Suministros SUS</p>
       </div>
 
-      <div class="security-banner">
+      <!-- Banner de Seguridad Normal -->
+      <div class="security-banner" id="normalSecurityBanner">
         <svg class="security-icon"><use href="#i-shield"/></svg>
         <div>
           <strong>PORTAL OFICIAL DE ACCESO</strong>
           <small>Acceso exclusivo a funcionarios y personal médico autorizado</small>
+        </div>
+      </div>
+
+      <!-- Banner de Alerta Roja por Error de Credenciales -->
+      <div class="security-error-banner hidden" id="loginErrorBanner">
+        <svg class="security-error-icon" viewBox="0 0 24 24">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM12 8v4m0 4h.01"/>
+        </svg>
+        <div>
+          <strong id="errorBannerTitle">Credenciales no autorizadas</strong>
+          <small id="errorBannerText">Verifique su usuario y contraseña.</small>
         </div>
       </div>
 
@@ -116,13 +147,20 @@ export function renderLoginOverlay() {
     </div>
   `;
 
-  // Toggle de Contraseña visible / oculta
+  // Inicializar componentes interactivos
+  setupInteractiveElements();
+  checkExistingLockout();
+}
+
+function setupInteractiveElements() {
   const toggleBtn = document.getElementById("togglePasswordBtn");
   const pinInput = document.getElementById("loginPin");
   const eyeOpen = document.getElementById("eyeIconOpen");
   const eyeClosed = document.getElementById("eyeIconClosed");
   const capsWarning = document.getElementById("capsWarning");
+  const form = document.getElementById("mainLoginForm");
 
+  // Toggle de Contraseña visible / oculta
   toggleBtn?.addEventListener("click", () => {
     if (!pinInput) return;
     const isPassword = pinInput.type === "password";
@@ -133,7 +171,7 @@ export function renderLoginOverlay() {
     }
   });
 
-  // Detección de Bloq Mayús (Caps Lock)
+  // Detección de Bloq Mayús
   pinInput?.addEventListener("keyup", (e) => {
     if (e.getModifierState && capsWarning) {
       const isCaps = e.getModifierState("CapsLock");
@@ -142,41 +180,186 @@ export function renderLoginOverlay() {
   });
 
   // Envío del Formulario
-  const form = document.getElementById("mainLoginForm");
+  form?.addEventListener("submit", handleFormSubmit);
+}
+
+async function handleFormSubmit(e) {
+  e.preventDefault();
+  const emailInput = document.getElementById("loginEmail");
+  const pinInput = document.getElementById("loginPin");
   const submitBtn = document.getElementById("loginSubmitBtn");
   const submitText = document.getElementById("submitBtnText");
+  const card = document.querySelector(".login-card-official");
 
-  form?.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const email = document.getElementById("loginEmail").value.trim();
-    const pin = document.getElementById("loginPin").value.trim();
+  const email = emailInput?.value.trim();
+  const pin = pinInput?.value.trim();
 
-    if (!email || !pin) {
-      showToast("Campos requeridos", "Por favor ingrese su usuario y contraseña.", "warning");
-      return;
+  // Verificar si actualmente está bloqueado
+  const lockState = getLockState();
+  if (lockState.lockedUntil && Date.now() < lockState.lockedUntil) {
+    triggerCardShake(card);
+    showToast("Acceso Bloqueado", "El sistema se encuentra en periodo de bloqueo temporal.", "error");
+    return;
+  }
+
+  try {
+    if (submitBtn && submitText) {
+      submitBtn.disabled = true;
+      submitBtn.classList.add("loading");
+      submitText.textContent = "Verificando credenciales...";
     }
 
-    try {
-      if (submitBtn && submitText) {
-        submitBtn.disabled = true;
-        submitBtn.classList.add("loading");
-        submitText.textContent = "Verificando credenciales...";
-      }
+    // Intento de autenticación real
+    await login(email, pin);
 
-      await login(email, pin);
-      overlay.classList.remove("active");
-      overlay.style.display = "none";
-      document.body.classList.remove("logged-out");
-    } catch (err) {
-      showToast("Acceso Denegado", err.message, "error");
-    } finally {
+    // Éxito: limpiar bloqueo
+    clearLockState();
+    const overlay = document.getElementById("loginOverlay");
+    overlay?.classList.remove("active");
+    if (overlay) overlay.style.display = "none";
+    document.body.classList.remove("logged-out");
+
+  } catch (err) {
+    // Error de autenticación: disparar vibración y política progresiva
+    triggerCardShake(card);
+    handleFailedAttempt();
+    showToast("Acceso Denegado", err.message, "error");
+  } finally {
+    const currentState = getLockState();
+    if (!currentState.lockedUntil || Date.now() >= currentState.lockedUntil) {
       if (submitBtn && submitText) {
         submitBtn.disabled = false;
         submitBtn.classList.remove("loading");
         submitText.textContent = "Ingresar al Sistema";
       }
     }
-  });
+  }
+}
+
+function triggerCardShake(card) {
+  if (!card) return;
+  card.classList.remove("shake-error");
+  void card.offsetWidth; // Forzar reflujo para reiniciar la animación
+  card.classList.add("shake-error");
+}
+
+function handleFailedAttempt() {
+  const state = getLockState();
+  state.attempts = (state.attempts || 0) + 1;
+
+  if (state.lockTier === 0) {
+    // Primer ciclo: 3 intentos permitidos
+    if (state.attempts >= 3) {
+      // Primer bloqueo: 5 minutos
+      state.lockTier = 1;
+      const minutes = 5;
+      state.lockedUntil = Date.now() + minutes * 60 * 1000;
+      saveLockState(state);
+      startCountdownTimer(state.lockedUntil, minutes);
+      showErrorAlert(`Acceso bloqueado por seguridad (${minutes} min)`, `Superó el límite de 3 intentos fallidos. Espere el tiempo establecido.`);
+    } else {
+      const remaining = 3 - state.attempts;
+      saveLockState(state);
+      showErrorAlert(
+        `Credenciales incorrectas (Intento ${state.attempts} de 3)`,
+        `Le queda${remaining === 1 ? "" : "n"} ${remaining} intento${remaining === 1 ? "" : "s"} antes de suspender el acceso.`
+      );
+    }
+  } else {
+    // Si ya tuvo un bloqueo previo y se vuelve a equivocar: escalamiento progresivo
+    state.lockTier += 1;
+    let minutes = 15;
+    if (state.lockTier === 2) minutes = 15;
+    else if (state.lockTier === 3) minutes = 30;
+    else if (state.lockTier === 4) minutes = 60;
+    else minutes = 120; // 2 horas máximo
+
+    state.lockedUntil = Date.now() + minutes * 60 * 1000;
+    saveLockState(state);
+    startCountdownTimer(state.lockedUntil, minutes);
+    showErrorAlert(
+      `Acceso suspendido nuevamente (${minutes} min)`,
+      `Intento no autorizado tras reactivación. Bloqueo extendido a ${minutes} minutos.`
+    );
+  }
+}
+
+function showErrorAlert(title, message) {
+  const normalBanner = document.getElementById("normalSecurityBanner");
+  const errorBanner = document.getElementById("loginErrorBanner");
+  const titleEl = document.getElementById("errorBannerTitle");
+  const textEl = document.getElementById("errorBannerText");
+
+  if (normalBanner) normalBanner.classList.add("hidden");
+  if (errorBanner) errorBanner.classList.remove("hidden");
+  if (titleEl) titleEl.textContent = title;
+  if (textEl) textEl.textContent = message;
+}
+
+function checkExistingLockout() {
+  const state = getLockState();
+  if (state.lockedUntil && Date.now() < state.lockedUntil) {
+    const remainingMs = state.lockedUntil - Date.now();
+    const remainingMins = Math.ceil(remainingMs / (60 * 1000));
+    startCountdownTimer(state.lockedUntil, remainingMins);
+    showErrorAlert(
+      `Acceso bloqueado por seguridad`,
+      `El sistema se encuentra temporalmente suspendido por intentos fallidos previos.`
+    );
+  }
+}
+
+function startCountdownTimer(lockedUntil, totalMinutes) {
+  clearInterval(countdownInterval);
+  const emailInput = document.getElementById("loginEmail");
+  const pinInput = document.getElementById("loginPin");
+  const submitBtn = document.getElementById("loginSubmitBtn");
+  const submitText = document.getElementById("submitBtnText");
+
+  if (emailInput) emailInput.disabled = true;
+  if (pinInput) pinInput.disabled = true;
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.classList.add("is-locked");
+  }
+
+  function update() {
+    const now = Date.now();
+    const diff = lockedUntil - now;
+
+    if (diff <= 0) {
+      clearInterval(countdownInterval);
+      const state = getLockState();
+      state.lockedUntil = 0;
+      saveLockState(state);
+
+      if (emailInput) emailInput.disabled = false;
+      if (pinInput) pinInput.disabled = false;
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove("is-locked");
+      }
+      if (submitText) submitText.textContent = "Ingresar al Sistema";
+
+      showErrorAlert(
+        "Bloqueo finalizado",
+        "Puede ingresar sus credenciales nuevamente con precaución."
+      );
+      return;
+    }
+
+    const totalSecs = Math.floor(diff / 1000);
+    const m = Math.floor(totalSecs / 60);
+    const s = totalSecs % 60;
+    const timeFormatted = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+
+    if (submitText) {
+      submitText.textContent = `Bloqueado por seguridad (${timeFormatted})`;
+    }
+  }
+
+  update();
+  countdownInterval = setInterval(update, 1000);
 }
 
 export function updateNavbarProfile() {
