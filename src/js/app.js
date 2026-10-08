@@ -145,6 +145,13 @@ async function switchView(viewName) {
   }
 
   currentView = viewName;
+  document.body.setAttribute("data-current-view", viewName);
+
+  // En Control y Reportes se usan filtros propios dedicados: ocultar selector superior
+  const topbarContext = document.querySelector(".topbar .context");
+  if (topbarContext) {
+    topbarContext.style.display = (viewName === "reports" || viewName === "users") ? "none" : "";
+  }
 
   // Actualizar clases de botones
   document.querySelectorAll(".nav-item").forEach((btn) => {

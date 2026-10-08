@@ -252,11 +252,132 @@
           </section>
 
           <section class="view" id="view-reports">
-            <div class="page-heading"><div><span class="eyebrow">AUDITORÍA ADMINISTRATIVA</span><h1>Control de movimientos</h1><p>Consulta cada venta, entrega SUS e ingreso de lote sin salir del sistema.</p></div><button class="button primary" id="exportReport"><svg><use href="#i-download"/></svg>Exportar auditoría</button></div>
-            <div class="report-filters"><label>Periodo <input id="reportMonth" type="month" /></label><label>Sucursal <select id="reportBranch"></select></label><label>Tipo de salida <select id="reportType"><option value="all">Ventas y SUS</option><option value="normal">Solo ventas</option><option value="sus">Solo SUS</option></select></label><label>Buscar <input id="reportSearch" type="search" placeholder="Vendedor, medicamento o lote" /></label></div>
+            <div class="page-heading">
+              <div>
+                <span class="eyebrow">AUDITORÍA Y CONTROL MUNICIPAL</span>
+                <h1>Control de movimientos</h1>
+                <p>Supervisión detallada de cada venta comercial, dispensación SUS e ingreso de lote en farmacias municipales.</p>
+              </div>
+              <button class="button primary" id="exportReport">
+                <svg><use href="#i-download"/></svg>
+                <span>Exportar auditoría</span>
+              </button>
+            </div>
+
+            <div class="report-filters-card">
+              <div class="filters-card-header">
+                <div class="filters-header-title">
+                  <span class="filter-header-badge"><svg width="14" height="14"><use href="#i-search"/></svg></span>
+                  <div>
+                    <strong>Filtros de Auditoría y Trazabilidad</strong>
+                    <small>Filtre por mes, sucursal o modalidad de salida con actualización instantánea</small>
+                  </div>
+                </div>
+                <button type="button" class="btn-clear-filters" id="clearReportFilters" title="Restablecer filtros">
+                  <svg width="13" height="13"><use href="#i-close"/></svg>
+                  <span>Limpiar filtros</span>
+                </button>
+              </div>
+
+              <div class="filters-card-grid">
+                <div class="filter-field">
+                  <label for="reportMonth">
+                    <svg class="filter-field-icon"><use href="#i-grid"/></svg>
+                    <span>Periodo (Mes / Año)</span>
+                  </label>
+                  <input id="reportMonth" type="month" class="filter-input" />
+                </div>
+
+                <div class="filter-field">
+                  <label for="reportBranch">
+                    <svg class="filter-field-icon"><use href="#i-store"/></svg>
+                    <span>Sucursal Municipal</span>
+                  </label>
+                  <select id="reportBranch" class="filter-input filter-select">
+                    <option value="all">Todas las sucursales (Consolidado)</option>
+                  </select>
+                </div>
+
+                <div class="filter-field">
+                  <label for="reportType">
+                    <svg class="filter-field-icon"><use href="#i-cart"/></svg>
+                    <span>Modalidad de Operación</span>
+                  </label>
+                  <select id="reportType" class="filter-input filter-select">
+                    <option value="all">Todas (Ventas y SUS)</option>
+                    <option value="normal">Solo Ventas Comerciales</option>
+                    <option value="sus">Solo Dispensación SUS</option>
+                  </select>
+                </div>
+
+                <div class="filter-field">
+                  <label for="reportSearch">
+                    <svg class="filter-field-icon"><use href="#i-search"/></svg>
+                    <span>Búsqueda Rápida</span>
+                  </label>
+                  <input id="reportSearch" type="search" class="filter-input" placeholder="Vendedor, paciente, producto, código..." />
+                </div>
+              </div>
+            </div>
+
             <div class="metric-grid report-metrics" id="reportMetrics"></div>
-            <div class="dashboard-grid report-grid"><article class="panel"><div class="panel-heading"><div><h2>Comparativo de sucursales</h2><p>Ingresos registrados durante el periodo</p></div></div><div id="branchBarChart" class="branch-bar-chart"></div></article><article class="panel"><div class="panel-heading"><div><h2>Distribución</h2><p>Ventas normales frente a entregas SUS</p></div></div><div id="donutChart" class="donut-layout"></div></article></div>
-            <article class="panel table-panel audit-panel"><div class="audit-tabs"><button class="active" data-audit-view="sales">Ventas y entregas <b id="salesAuditCount">0</b></button><button data-audit-view="entries">Ingresos de lotes <b id="entryAuditCount">0</b></button></div><div class="panel-heading audit-heading"><div><h2 id="auditTitle">Ventas y entregas SUS</h2><p id="reportRowsLabel"></p></div><span class="audit-hint"><svg><use href="#i-lock"/></svg>Registro visible solo para administración</span></div><div class="table-wrap"><table class="audit-table"><thead id="reportTableHead"></thead><tbody id="reportTable"></tbody></table></div></article>
+
+            <div class="dashboard-grid report-grid">
+              <article class="panel">
+                <div class="panel-heading">
+                  <div>
+                    <h2>Comparativo por Sucursal</h2>
+                    <p>Ingresos y movimiento comercial registrado en cada punto municipal</p>
+                  </div>
+                </div>
+                <div id="branchBarChart" class="branch-bar-chart"></div>
+              </article>
+
+              <article class="panel">
+                <div class="panel-heading">
+                  <div>
+                    <h2>Distribución de Salidas</h2>
+                    <p>Proporción entre ventas comerciales e ítems gratuitos SUS</p>
+                  </div>
+                </div>
+                <div id="donutChart" class="donut-layout"></div>
+              </article>
+            </div>
+
+            <article class="panel table-panel audit-panel">
+              <div class="audit-tabs-bar">
+                <div class="audit-tabs">
+                  <button class="audit-tab-btn active" data-audit-view="sales">
+                    <svg width="15" height="15"><use href="#i-cart"/></svg>
+                    <span>Ventas y entregas SUS</span>
+                    <span class="tab-count-badge" id="salesAuditCount">0</span>
+                  </button>
+                  <button class="audit-tab-btn" data-audit-view="entries">
+                    <svg width="15" height="15"><use href="#i-plus"/></svg>
+                    <span>Ingresos de lotes</span>
+                    <span class="tab-count-badge" id="entryAuditCount">0</span>
+                  </button>
+                </div>
+                <div class="audit-lock-badge">
+                  <svg width="13" height="13"><use href="#i-lock"/></svg>
+                  <span>Registro oficial reservado para Administración</span>
+                </div>
+              </div>
+
+              <div class="panel-heading audit-heading">
+                <div>
+                  <h2 id="auditTitle">Ventas y entregas SUS</h2>
+                  <p id="reportRowsLabel">Cargando movimientos...</p>
+                </div>
+              </div>
+
+              <div class="table-wrap">
+                <table class="audit-table">
+                  <thead id="reportTableHead"></thead>
+                  <tbody id="reportTable"></tbody>
+                </table>
+              </div>
+            </article>
           </section>
 
           <section class="view" id="view-users">
@@ -422,13 +543,29 @@
       </form>
     </dialog>
 
-    <dialog id="movementDialog">
-      <div class="dialog-heading"><div><span class="eyebrow">TRAZABILIDAD COMPLETA</span><h2 id="movementTitle">Detalle del movimiento</h2></div><button type="button" class="icon-button" data-close-movement aria-label="Cerrar"><svg><use href="#i-close"/></svg></button></div>
-      <div class="movement-detail" id="movementDetail"></div>
-      <div class="dialog-actions"><button type="button" class="button secondary" data-close-movement>Cerrar</button></div>
+    <dialog id="movementDialog" class="official-modal">
+      <div class="official-modal-header">
+        <div class="official-modal-title-wrap">
+          <div class="official-modal-icon">
+            <svg><use href="#i-chart"/></svg>
+          </div>
+          <div>
+            <span class="official-modal-badge">TRAZABILIDAD OFICIAL</span>
+            <h2 id="movementTitle">Detalle del movimiento</h2>
+            <p class="official-modal-subtitle" id="movementSubtitle">Auditoría completa de la transacción registrada en el sistema municipal.</p>
+          </div>
+        </div>
+        <button type="button" class="official-modal-close" data-close-movement aria-label="Cerrar"><svg><use href="#i-close"/></svg></button>
+      </div>
+      <div class="official-modal-body">
+        <div class="movement-detail" id="movementDetail"></div>
+      </div>
+      <div class="official-modal-footer">
+        <button type="button" class="btn-official-cancel" data-close-movement>Cerrar ventana</button>
+      </div>
     </dialog>
 
     <div class="toast" id="toast" role="status" aria-live="polite"><span><svg><use href="#i-check"/></svg></span><div><strong id="toastTitle">Listo</strong><p id="toastMessage"></p></div></div>
-    <script type="module" src="/src/js/app.js?v=11"></script>
+    <script type="module" src="/src/js/app.js?v=12"></script>
   </body>
 </html>
