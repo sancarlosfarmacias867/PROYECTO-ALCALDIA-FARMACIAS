@@ -21,7 +21,9 @@ export async function renderRestockModule(selectedBranchId = "all") {
 
   // Si no es admin, SIEMPRE forzar a su sucursal asignada
   const isRestricted = !isUserAdmin && user?.branch_id !== "all";
-  currentTargetBranch = isRestricted ? user.branch_id : selectedBranchId;
+  currentTargetBranch = isRestricted
+    ? user.branch_id
+    : (selectedBranchId !== "all" ? selectedBranchId : "san-carlos");
 
   const [branches, entries] = await Promise.all([
     getBranches(),
@@ -73,8 +75,6 @@ export async function renderRestockModule(selectedBranchId = "all") {
   if (branchLabel) {
     branchLabel.textContent = isRestricted
       ? getBranchName(user.branch_id, cachedBranches)
-      : currentTargetBranch === "all"
-      ? "Todas las sucursales"
       : getBranchName(currentTargetBranch, cachedBranches);
   }
 
@@ -353,6 +353,17 @@ export function initRestockEvents() {
   // 1. Escuchar cálculos en vivo
   [qtyInput, costInput, marginInput].forEach((input) => {
     input?.addEventListener("input", updateLiveCalculations);
+  });
+
+  // Sincronizar selector de sucursal receptora con el selector superior
+  const entryBranchSelect = document.getElementById("entryBranch");
+  entryBranchSelect?.addEventListener("change", (e) => {
+    const val = e.target.value;
+    const topbarSelect = document.getElementById("branchSelect");
+    if (topbarSelect && topbarSelect.value !== val) {
+      topbarSelect.value = val;
+      topbarSelect.dispatchEvent(new Event("change"));
+    }
   });
 
   // 2. Escuchar fecha de vencimiento

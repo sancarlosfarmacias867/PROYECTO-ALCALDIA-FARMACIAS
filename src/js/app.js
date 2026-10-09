@@ -24,6 +24,7 @@ import { invalidateUsersCache } from "../services/usersService.js";
 
 let currentView = "dashboard";
 let selectedBranch = "all";
+let lastSpecificBranch = "san-carlos";
 
 async function initApp() {
   // 1. Inicializar Autenticación
@@ -79,20 +80,42 @@ async function populateBranchSelector() {
   if (!user) return;
 
   if (user.role === "admin") {
-    // El Administrador ve TODO y puede elegir cualquier sucursal o el consolidado
+    // El Administrador ve las sucursales según el contexto del módulo
     branchSelect.disabled = false;
     branchSelect.classList.remove("locked-branch");
     if (branchLabel) branchLabel.innerHTML = "Sucursal";
 
-    branchSelect.innerHTML = `
-      <option value="all">Consolidado (Todas las 6)</option>
-      ${branches.map((b) => `<option value="${b.id}">${b.name} (${b.code})</option>`).join("")}
-    `;
-    branchSelect.value = selectedBranch;
+    // En Ventas y en Ingresos está prohibido el consolidado (debe ser una farmacia física individual)
+    const isSingleBranchModule = currentView === "sales" || currentView === "entries";
+
+    if (isSingleBranchModule) {
+      // Si la sucursal seleccionada era "all", cambiar automáticamente a una sucursal específica
+      if (selectedBranch === "all" || !branches.some((b) => b.id === selectedBranch)) {
+        selectedBranch = (lastSpecificBranch && branches.some((b) => b.id === lastSpecificBranch))
+          ? lastSpecificBranch
+          : branches[0]?.id || "san-carlos";
+      } else {
+        lastSpecificBranch = selectedBranch;
+      }
+
+      // Opciones SIN "Consolidado"
+      branchSelect.innerHTML = branches
+        .map((b) => `<option value="${b.id}">${b.name} (${b.code})</option>`)
+        .join("");
+      branchSelect.value = selectedBranch;
+    } else {
+      // En Dashboard, Inventario y Reportes se permite "Consolidado (Todas las 6)"
+      branchSelect.innerHTML = `
+        <option value="all">Consolidado (Todas las 6)</option>
+        ${branches.map((b) => `<option value="${b.id}">${b.name} (${b.code})</option>`).join("")}
+      `;
+      branchSelect.value = selectedBranch;
+    }
   } else {
     // Vendedor o Técnico: SU SUCURSAL ES FIJA, ASIGNADA POR EL ADMINISTRADOR
     const userBranch = branches.find((b) => b.id === user.branch_id) || branches[0];
     selectedBranch = userBranch.id;
+    lastSpecificBranch = userBranch.id;
 
     branchSelect.innerHTML = `
       <option value="${userBranch.id}">${userBranch.name} (${userBranch.code})</option>
@@ -110,6 +133,9 @@ async function populateBranchSelector() {
   branchSelect.onchange = async (e) => {
     if (user.role === "admin") {
       selectedBranch = e.target.value;
+      if (selectedBranch !== "all") {
+        lastSpecificBranch = selectedBranch;
+      }
       await loadActiveView();
       updateNotificationsUI();
     }
@@ -168,6 +194,9 @@ async function switchView(viewName) {
 
   // Cerrar sidebar en móvil si está abierto
   document.getElementById("sidebar")?.classList.remove("open");
+
+  // Actualizar el selector de sucursal según las reglas del módulo activo (excluyendo consolidado en ventas e ingresos)
+  await populateBranchSelector();
 
   await loadActiveView();
 }

@@ -18,10 +18,15 @@ export async function renderPosModule(selectedBranchId = "all") {
   const user = getCurrentUser();
 
   // Si el usuario no es admin, forzar estrictamente a su sucursal asignada
-  const activeBranch =
+  let activeBranch =
     user?.role !== "admin" && user?.branch_id !== "all"
       ? user.branch_id
       : selectedBranchId;
+
+  // En el punto de venta nunca puede venderse en 'all' / consolidado: asegurar sucursal física individual
+  if (activeBranch === "all") {
+    activeBranch = "san-carlos";
+  }
 
   currentActiveBranch = activeBranch;
 
