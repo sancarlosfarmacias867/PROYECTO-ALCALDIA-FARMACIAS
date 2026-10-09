@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/src/styles.css?v=12" />
+    <link rel="stylesheet" href="/src/shell.css?v=2" />
     <title>Farmacias Municipales · San Carlos</title>
     <script>
       (function() {
@@ -141,19 +142,22 @@
 
     <div class="app-shell">
       <aside class="sidebar" id="sidebar">
-        <div class="brand">
+        <div class="brand" role="button" tabindex="0" aria-label="Acceder con otra cuenta">
           <div class="brand-mark"><img src="/assets/logo-san-carlos.png" alt="Escudo del Municipio de San Carlos" /></div>
-          <div><strong>Farmacias</strong><span>Municipio de San Carlos</span></div>
+          <div><small class="brand-eyebrow">RED MUNICIPAL DE SALUD</small><strong>Farmacias<span class="brand-period">+</span></strong><span>Municipio de San Carlos</span></div>
         </div>
         <nav class="nav" aria-label="Navegación principal">
+          <span class="nav-section-label">OPERACIÓN DIARIA</span>
           <button class="nav-item active" data-view="dashboard" data-roles="admin"><svg><use href="#i-grid"/></svg><span>Resumen</span></button>
           <button class="nav-item" data-view="inventory" data-roles="admin,vendedor,tecnico"><svg><use href="#i-box"/></svg><span>Inventario</span><b id="inventoryBadge">0</b></button>
           <button class="nav-item" data-view="sales" data-roles="admin,vendedor"><svg><use href="#i-cart"/></svg><span>Ventas y SUS</span></button>
           <button class="nav-item" data-view="entries" data-roles="admin,tecnico"><svg><use href="#i-plus"/></svg><span>Ingresos</span></button>
+          <span class="nav-section-label nav-section-secondary" data-roles="admin">ADMINISTRACIÓN</span>
           <button class="nav-item" data-view="reports" data-roles="admin"><svg><use href="#i-chart"/></svg><span>Control y reportes</span></button>
           <button class="nav-item" data-view="branches" data-roles="admin"><svg><use href="#i-store"/></svg><span>Sucursales</span></button>
           <button class="nav-item" data-view="users" data-roles="admin"><svg><use href="#i-users"/></svg><span>Usuarios y roles</span></button>
         </nav>
+        <div class="sidebar-signature" aria-hidden="true"><svg><use href="#i-plus"/></svg><span>Conectados para<br><strong>cuidar mejor.</strong></span></div>
         <div class="sidebar-foot">
           <span class="system-dot"></span>
           <div><strong>Sistema operativo</strong><small id="syncStatus">Conectando datos compartidos…</small></div>
@@ -163,13 +167,14 @@
       <main class="main">
         <header class="topbar">
           <button class="icon-button menu-button" id="menuButton" aria-label="Abrir menú"><svg><use href="#i-menu"/></svg></button>
+          <div class="shell-location"><span>ESPACIO DE TRABAJO</span><strong id="shellViewName">Resumen</strong></div>
           <div class="context">
             <label for="branchSelect">Sucursal</label>
             <select id="branchSelect"></select>
           </div>
           <div class="topbar-actions">
             <button class="icon-button notification-button" id="notificationButton" data-roles="admin,vendedor,tecnico" aria-label="Ver alertas"><svg><use href="#i-bell"/></svg><i id="alertCount">0</i></button>
-            <div class="profile"><span>MA</span><div><strong id="profileName">María Aguilera</strong><small id="profileRole">Administradora</small></div></div>
+            <div class="profile" role="button" tabindex="0" aria-label="Acceder con otra cuenta"><span>MA</span><div><strong id="profileName">María Aguilera</strong><small id="profileRole">Administradora</small></div><svg class="profile-switch" aria-hidden="true"><use href="#i-key"/></svg></div>
           </div>
         </header>
 
@@ -313,8 +318,10 @@
 
                     <div class="entry-form-group quantity-group">
                       <label for="saleQuantity"><span>Cantidad</span><span class="req">*</span></label>
-                      <div class="official-input-wrap">
-                        <input id="saleQuantity" type="number" min="1" value="1" class="official-input font-bold text-center" />
+                      <div class="sale-quantity-stepper" role="group" aria-label="Cantidad de unidades">
+                        <button type="button" id="saleQuantityMinus" aria-label="Disminuir cantidad">−</button>
+                        <input id="saleQuantity" type="number" min="1" step="1" inputmode="numeric" value="1" class="official-input font-bold text-center" />
+                        <button type="button" id="saleQuantityPlus" aria-label="Aumentar cantidad">+</button>
                       </div>
                     </div>
 

@@ -415,6 +415,15 @@ export function initPosEvents() {
   // 3. Reactividad en el selector de producto y cantidad
   productSelect?.addEventListener("change", updateProductPreview);
   qtyInput?.addEventListener("input", updateProductPreview);
+  for (const [id, direction] of [["saleQuantityMinus", -1], ["saleQuantityPlus", 1]]) {
+    document.getElementById(id)?.addEventListener("click", () => {
+      if (!qtyInput || qtyInput.disabled) return;
+      const value = Number(qtyInput.value);
+      const current = Number.isFinite(value) && value >= 1 ? Math.floor(value) : 1;
+      qtyInput.value = String(Math.max(1, current + direction));
+      qtyInput.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+  }
 
   // 3. Botón Agregar al Carrito
   const addBtn = document.getElementById("addToCart");

@@ -4,6 +4,7 @@
  */
 
 import { checkSupabaseConnection } from "../config/supabase.js";
+import { renderBranchPicker } from "../modules/branches/branchPicker.js";
 import { initAuth, getCurrentUser, logout, isAdmin, isTechnician, isSeller, getRoleLabel } from "../services/authService.js";
 import { getBranches, getBranchName, invalidateBranchesCache } from "../services/branchesService.js";
 import { showToast } from "../services/toastService.js";
@@ -145,6 +146,7 @@ async function populateBranchSelector() {
       updateNotificationsUI();
     }
   };
+  renderBranchPicker(branchSelect, branches);
 }
 
 function initNavigation() {
@@ -190,6 +192,10 @@ async function switchView(viewName) {
   // Actualizar clases de botones
   document.querySelectorAll(".nav-item").forEach((btn) => {
     btn.classList.toggle("active", btn.getAttribute("data-view") === viewName);
+    if (btn.getAttribute("data-view") === viewName) {
+      btn.setAttribute("aria-current", "page");
+      document.getElementById("shellViewName").textContent = btn.querySelector("span").textContent;
+    } else btn.removeAttribute("aria-current");
   });
 
   // Mostrar sección activa
@@ -275,6 +281,14 @@ function applyRoleVisibility() {
 }
 
 function initGlobalEvents() {
+  document.querySelectorAll('.brand[role="button"], .profile[role="button"]').forEach((element) => {
+    element.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        element.click();
+      }
+    });
+  });
 
   // Click en Perfil para abrir Login / Switch
   document.querySelector(".profile")?.addEventListener("click", () => {
