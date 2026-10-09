@@ -1,4 +1,4 @@
-import { seedInventory, seedSales, seedEntries, seedUsers } from "./data.js?v=5";
+import { seedInventory, seedSales, seedEntries, seedUsers } from "./data.js";
 
 const KEY = "farmacias-san-carlos-demo-v3";
 const CLOUD_STATE_URL = "https://mantledb.sh/v2/farmacias-sc-4f8c2a9d7e61/state";
