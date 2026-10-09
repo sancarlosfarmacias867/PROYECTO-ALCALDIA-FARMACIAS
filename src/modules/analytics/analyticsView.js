@@ -231,16 +231,16 @@ export async function renderAnalyticsModule(selectedBranchId = "all") {
               const isSus = m.type === "sus";
               return `
                 <tr>
-                  <td><code>${m.id}</code></td>
-                  <td><small>${new Date(m.timestamp || m.date).toLocaleString("es-BO")}</small></td>
-                  <td><span class="branch-tag">${getBranchName(m.branch_id, branches)}</span></td>
-                  <td><span class="status-badge ${isSus ? "badge-sus" : "badge-sale"}">${isSus ? "SUS" : "Venta"}</span></td>
-                  <td>${m.patient_name ? `<strong>${m.patient_name}</strong> <small class="text-muted">(${m.sus_code || "SUS"})</small>` : "Mostrador General"}</td>
-                  <td><strong>${m.items} uds.</strong></td>
-                  <td><strong>Bs ${Number(m.total).toFixed(2)}</strong></td>
-                  <td class="profit-color">Bs ${Number(m.profit).toFixed(2)}</td>
-                  <td><small>${m.responsible}</small></td>
-                  <td>
+                  <td data-label="ID"><code>${m.id}</code></td>
+                  <td data-label="Fecha y hora"><small>${new Date(m.timestamp || m.date).toLocaleString("es-BO")}</small></td>
+                  <td data-label="Sucursal"><span class="branch-tag">${getBranchName(m.branch_id, branches)}</span></td>
+                  <td data-label="Tipo"><span class="status-badge ${isSus ? "badge-sus" : "badge-sale"}">${isSus ? "SUS" : "Venta"}</span></td>
+                  <td data-label="Beneficiario">${m.patient_name ? `<strong>${m.patient_name}</strong> <small class="text-muted">(${m.sus_code || "SUS"})</small>` : "Mostrador General"}</td>
+                  <td data-label="Ítems"><strong>${m.items} uds.</strong></td>
+                  <td data-label="Total"><strong>Bs ${Number(m.total).toFixed(2)}</strong></td>
+                  <td data-label="Ganancia" class="profit-color">Bs ${Number(m.profit).toFixed(2)}</td>
+                  <td data-label="Responsable"><small>${m.responsible}</small></td>
+                  <td data-label="Acción">
                     <button class="btn-detail-row" data-detail-id="${m.id}" data-detail-type="sale">
                       Ver detalle
                     </button>
@@ -279,16 +279,16 @@ export async function renderAnalyticsModule(selectedBranchId = "all") {
           tableBody.innerHTML = filteredEntries
             .map((e) => `
               <tr>
-                <td><code>${e.id}</code></td>
-                <td><small>${e.date}</small></td>
-                <td><span class="branch-tag">${getBranchName(e.branch_id, branches)}</span></td>
-                <td><strong>${e.name}</strong></td>
-                <td><code class="lot-badge">${e.lot}</code></td>
-                <td><strong>${e.quantity} uds.</strong></td>
-                <td>Bs ${Number(e.unit_cost || 0).toFixed(2)}</td>
-                <td><small>${e.expiry}</small></td>
-                <td><small>${e.responsible}</small></td>
-                <td>
+                <td data-label="ID ingreso"><code>${e.id}</code></td>
+                <td data-label="Fecha"><small>${e.date}</small></td>
+                <td data-label="Sucursal"><span class="branch-tag">${getBranchName(e.branch_id, branches)}</span></td>
+                <td data-label="Medicamento"><strong>${e.name}</strong></td>
+                <td data-label="Lote"><code class="lot-badge">${e.lot}</code></td>
+                <td data-label="Cantidad"><strong>${e.quantity} uds.</strong></td>
+                <td data-label="Costo unitario">Bs ${Number(e.unit_cost || 0).toFixed(2)}</td>
+                <td data-label="Vencimiento"><small>${e.expiry}</small></td>
+                <td data-label="Responsable"><small>${e.responsible}</small></td>
+                <td data-label="Acción">
                   <button class="btn-detail-row" data-detail-id="${e.id}" data-detail-type="entry">
                     Ver detalle
                   </button>
@@ -455,11 +455,11 @@ function openMovementDialog(id, type, movements, entries, branches) {
             ${(m.lines && m.lines.length > 0)
               ? m.lines.map((l) => `
                 <tr>
-                  <td><strong>${l.name || "Medicamento"}</strong></td>
-                  <td><code class="lot-badge">${l.lot || "L-SC"}</code></td>
-                  <td>${l.quantity || 1} uds.</td>
-                  <td>Bs ${Number(l.unitPrice || 0).toFixed(2)}</td>
-                  <td><strong>Bs ${Number(l.subtotal || 0).toFixed(2)}</strong></td>
+                  <td data-label="Medicamento"><strong>${l.name || "Medicamento"}</strong></td>
+                  <td data-label="Lote"><code class="lot-badge">${l.lot || "L-SC"}</code></td>
+                  <td data-label="Cantidad">${l.quantity || 1} uds.</td>
+                  <td data-label="Precio unitario">Bs ${Number(l.unitPrice || 0).toFixed(2)}</td>
+                  <td data-label="Subtotal"><strong>Bs ${Number(l.subtotal || 0).toFixed(2)}</strong></td>
                 </tr>
               `).join("")
               : `<tr><td colspan="5" class="text-center" style="padding: 12px 0; color: #64748b;">Dispensación consolidada de ${m.items} unidades.</td></tr>`

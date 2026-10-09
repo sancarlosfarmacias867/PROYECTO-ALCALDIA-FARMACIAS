@@ -94,7 +94,7 @@ export async function renderUsersModule() {
 
         return `
           <tr class="${isActive ? "" : "row-inactive"}">
-            <td>
+            <td data-label="Usuario">
               <div class="user-cell">
                 <span class="user-avatar ${roleClass}">${displayName.charAt(0).toUpperCase()}</span>
                 <div>
@@ -103,15 +103,15 @@ export async function renderUsersModule() {
                 </div>
               </div>
             </td>
-            <td><span class="role-badge ${roleClass}">${getRoleLabel(u.role)}</span></td>
-            <td><span class="branch-tag">${branchName}</span></td>
-            <td>
+            <td data-label="Rol"><span class="role-badge ${roleClass}">${getRoleLabel(u.role)}</span></td>
+            <td data-label="Sucursal"><span class="branch-tag">${branchName}</span></td>
+            <td data-label="Estado">
               <button class="status-pill ${isActive ? "active" : "inactive"}" data-toggle-id="${u.id}" data-current="${isActive}" title="Clic para alternar estado">
                 <span class="dot"></span> ${isActive ? "Activo" : "Inactivo"}
               </button>
             </td>
-            <td><small class="text-muted">${u.last_access ? new Date(u.last_access).toLocaleDateString("es-BO") : "Reciente"}</small></td>
-            <td>
+            <td data-label="Último acceso"><small class="text-muted">${u.last_access ? new Date(u.last_access).toLocaleDateString("es-BO") : "Reciente"}</small></td>
+            <td data-label="Acciones">
               <div class="action-buttons">
                 <button class="icon-button edit-user-btn" data-id="${u.id}" title="Modificar rol, sucursal o clave">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

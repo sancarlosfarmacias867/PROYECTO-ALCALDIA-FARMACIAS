@@ -5523,5 +5523,740 @@ dialog[open] {
   }
 }
 
+/* =========================================================
+   EXPERIENCIA MÓVIL FINAL
+   Reglas de cierre: priorizan lectura, tacto y cero desborde.
+========================================================= */
+@media (max-width: 768px) {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    min-width: 0;
+    background: #f1f5f9;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    max-width: 100%;
+  }
+
+  input,
+  select,
+  textarea,
+  .pos-combobox-search-input {
+    font-size: 16px !important;
+  }
+
+  button,
+  .button,
+  [role="button"] {
+    touch-action: manipulation;
+  }
+
+  .content {
+    padding-bottom: calc(40px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .topbar {
+    padding-left: max(10px, env(safe-area-inset-left)) !important;
+    padding-right: max(10px, env(safe-area-inset-right)) !important;
+  }
+
+  .sidebar {
+    padding-bottom: env(safe-area-inset-bottom) !important;
+  }
+
+  .sidebar .nav-item {
+    min-height: 48px;
+  }
+
+  .panel-heading {
+    gap: 10px;
+  }
+
+  .panel-heading h2 {
+    font-size: 1rem;
+    line-height: 1.25;
+  }
+
+  .expiry-item {
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .expiry-item > div {
+    min-width: 0;
+  }
+
+  .expiry-item small {
+    overflow-wrap: anywhere;
+  }
+
+  /* Las tablas operativas se convierten en tarjetas verticales. */
+  .table-wrap,
+  .entry-history-table-wrap,
+  .report-table-wrap {
+    overflow: visible !important;
+    padding: 10px !important;
+    background: #f8fafc;
+  }
+
+  .table-wrap > table,
+  .entry-history-table,
+  .report-table-wrap > table {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .table-wrap > table > thead,
+  .entry-history-table > thead,
+  .report-table-wrap > table > thead {
+    display: none !important;
+  }
+
+  .table-wrap > table > tbody,
+  .entry-history-table > tbody,
+  .report-table-wrap > table > tbody {
+    display: grid !important;
+    width: 100% !important;
+    gap: 12px !important;
+  }
+
+  #reportTable {
+    min-width: 0 !important;
+  }
+
+  .table-wrap > table > tbody > tr,
+  .entry-history-table > tbody > tr,
+  .report-table-wrap > table > tbody > tr {
+    display: block !important;
+    width: 100% !important;
+    overflow: hidden;
+    border: 1px solid #dbe4ea;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.05);
+  }
+
+  .table-wrap > table > tbody > tr > td[data-label],
+  .entry-history-table > tbody > tr > td[data-label],
+  .report-table-wrap > table > tbody > tr > td[data-label] {
+    display: grid !important;
+    grid-template-columns: minmax(94px, 0.72fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+    width: 100% !important;
+    min-height: 44px;
+    padding: 10px 12px !important;
+    border: 0 !important;
+    border-bottom: 1px solid #eef2f6 !important;
+    text-align: right;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+  }
+
+  .table-wrap > table > tbody > tr > td[data-label]:last-child,
+  .entry-history-table > tbody > tr > td[data-label]:last-child,
+  .report-table-wrap > table > tbody > tr > td[data-label]:last-child {
+    border-bottom: 0 !important;
+  }
+
+  td[data-label]::before {
+    content: attr(data-label);
+    color: #64748b;
+    font-size: 0.67rem;
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: 0.055em;
+    text-align: left;
+    text-transform: uppercase;
+  }
+
+  .table-wrap td[colspan],
+  .entry-history-table td[colspan],
+  .report-table-wrap td[colspan] {
+    display: block !important;
+    width: 100% !important;
+    padding: 28px 16px !important;
+    border: 0 !important;
+  }
+
+  td[data-label] > .product-cell,
+  td[data-label] > .stock-cell,
+  td[data-label] > .expiry-cell,
+  td[data-label] > .price-cell {
+    align-items: flex-end;
+    min-width: 0;
+  }
+
+  td[data-label] > .user-cell,
+  td[data-label] > .action-buttons {
+    justify-content: flex-end;
+    min-width: 0;
+  }
+
+  td[data-label] .button,
+  td[data-label] .btn-detail-row,
+  td[data-label] .status-pill {
+    min-height: 40px;
+  }
+
+  .entry-history-table th,
+  .entry-history-table td {
+    white-space: normal;
+  }
+
+  /* Punto de venta: selectores reales y controles usados por el HTML actual. */
+  .type-switch button {
+    min-width: 0;
+    min-height: 58px;
+  }
+
+  .type-badge {
+    display: none;
+  }
+
+  .form-section-header > div:last-child,
+  .type-btn-text,
+  .cart-item-info {
+    min-width: 0;
+  }
+
+  #addToCart,
+  #completeSale {
+    width: 100% !important;
+    min-height: 50px !important;
+    justify-content: center !important;
+  }
+
+  .pos-item-preview {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch !important;
+    gap: 8px !important;
+    padding: 10px !important;
+  }
+
+  .preview-item {
+    min-width: 0;
+    min-height: 58px;
+    padding: 9px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #ffffff;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+  }
+
+  .preview-label {
+    font-size: 0.68rem;
+    line-height: 1.2;
+  }
+
+  .pos-cart-header {
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .cart-title-wrap {
+    min-width: 0;
+  }
+
+  .cart-title-wrap h3 {
+    line-height: 1.25;
+  }
+
+  .cart-item-actions {
+    flex-wrap: wrap;
+  }
+
+  .cart-item-price {
+    margin-left: auto;
+  }
+
+  .summary-row {
+    gap: 12px;
+  }
+
+  .summary-label {
+    min-width: 0;
+  }
+
+  .summary-val {
+    flex-shrink: 0;
+  }
+
+  /* Reportes y formularios largos. */
+  .filters-card-header,
+  .audit-tabs-bar,
+  .audit-tabs {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .btn-clear-filters,
+  .audit-tab-btn {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  .audit-lock-badge {
+    align-self: stretch;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .donut-layout,
+  .price-calculation-card,
+  .price-metrics-grid {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .price-calc-amount {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  dialog.official-modal {
+    max-height: calc(100dvh - 16px) !important;
+  }
+
+  .official-modal-form {
+    max-height: calc(100dvh - 16px);
+  }
+
+  .official-modal-subtitle {
+    line-height: 1.35;
+  }
+
+  .toast {
+    left: 10px !important;
+    right: 10px !important;
+    bottom: calc(12px + env(safe-area-inset-bottom)) !important;
+    width: auto !important;
+    max-width: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .logout-action-btn {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .logout-action-btn span {
+    display: none;
+  }
+
+  .topbar-actions {
+    gap: 6px !important;
+  }
+
+  .pos-item-preview {
+    grid-template-columns: 1fr;
+  }
+
+  .sus-header-title {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 360px) {
+  .topbar {
+    gap: 6px !important;
+    margin-left: 6px !important;
+    margin-right: 6px !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  .notification-button,
+  .profile > span,
+  .logout-action-btn,
+  .menu-button {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  .content {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  .type-switch {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* =========================================================
+   DENSIDAD MÓVIL COMPACTA
+   Conserva todos los datos y reduce drásticamente el alto.
+========================================================= */
+@media (max-width: 768px) {
+  .content {
+    padding-top: 10px !important;
+  }
+
+  .page-heading {
+    gap: 8px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .page-heading h1 {
+    font-size: 1.25rem !important;
+  }
+
+  .page-heading p {
+    line-height: 1.35;
+  }
+
+  .page-heading button,
+  .page-heading .button {
+    min-height: 42px !important;
+  }
+
+  .metric-grid,
+  .report-metrics,
+  .entries-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .metric-card,
+  .entry-kpi-card {
+    min-width: 0;
+    padding: 11px 12px !important;
+    border-radius: 12px !important;
+  }
+
+  .metric-grid > .metric-card:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  .metric-label,
+  .entry-kpi-label {
+    font-size: 0.62rem !important;
+    line-height: 1.2;
+  }
+
+  .metric-value,
+  .entry-kpi-val {
+    margin: 5px 0 2px !important;
+    font-size: 1.18rem !important;
+    line-height: 1.1;
+  }
+
+  .metric-foot,
+  .entry-kpi-sub {
+    font-size: 0.64rem !important;
+    line-height: 1.25;
+  }
+
+  .entry-kpi-card {
+    align-items: flex-start;
+    gap: 8px !important;
+  }
+
+  .entry-kpi-icon {
+    width: 34px !important;
+    height: 34px !important;
+  }
+
+  .entry-kpi-val,
+  .entry-kpi-sub {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+  }
+
+  .chart-panel,
+  .alerts-panel,
+  .branches-panel,
+  .report-filters-card {
+    padding: 13px !important;
+  }
+
+  .toolbar,
+  .report-table-toolbar {
+    padding: 9px !important;
+    gap: 8px !important;
+  }
+
+  .search,
+  .toolbar select,
+  #expiryFilter,
+  .history-search-input,
+  .filter-input {
+    min-height: 42px !important;
+    height: 42px !important;
+  }
+
+  .table-wrap,
+  .entry-history-table-wrap,
+  .report-table-wrap {
+    padding: 8px !important;
+  }
+
+  .table-wrap > table > tbody,
+  .entry-history-table > tbody,
+  .report-table-wrap > table > tbody {
+    gap: 9px !important;
+  }
+
+  .table-wrap > table > tbody > tr,
+  .entry-history-table > tbody > tr,
+  .report-table-wrap > table > tbody > tr {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px !important;
+    background: #e7edf2;
+    border: 1px solid #dbe4ea;
+    border-radius: 13px;
+  }
+
+  .table-wrap > table > tbody > tr > td[data-label],
+  .entry-history-table > tbody > tr > td[data-label],
+  .report-table-wrap > table > tbody > tr > td[data-label] {
+    display: flex !important;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 5px;
+    min-width: 0;
+    min-height: 54px;
+    padding: 8px 10px !important;
+    border: 0 !important;
+    background: #ffffff;
+    text-align: left;
+  }
+
+  td[data-label]::before {
+    font-size: 0.61rem;
+    line-height: 1.1;
+    letter-spacing: 0.045em;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  td[data-label] > *,
+  td[data-label] > * > * {
+    max-width: 100%;
+  }
+
+  td[data-label] strong,
+  td[data-label] small,
+  td[data-label] code,
+  td[data-label] span {
+    overflow-wrap: anywhere;
+  }
+
+  td[data-label] > .product-cell,
+  td[data-label] > .stock-cell,
+  td[data-label] > .expiry-cell,
+  td[data-label] > .price-cell {
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  td[data-label] > .user-cell,
+  td[data-label] > .action-buttons {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  td[data-label] .branch-tag,
+  td[data-label] .status-badge,
+  td[data-label] .status-pill,
+  td[data-label] .lot-badge {
+    width: auto !important;
+    max-width: 100%;
+    align-self: flex-start;
+    text-align: left;
+    white-space: normal;
+  }
+
+  #inventoryTable > tr > td:first-child,
+  #usersTable > tr > td:first-child,
+  #usersTable > tr > td[data-label="Acciones"],
+  .entry-history-table > tbody > tr > td[data-label="Responsable"] {
+    grid-column: 1 / -1;
+  }
+
+  #inventoryTable > tr > td:first-child,
+  #usersTable > tr > td[data-label="Acciones"],
+  .entry-history-table > tbody > tr > td[data-label="Responsable"] {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  #inventoryTable > tr > td:first-child .product-cell {
+    width: auto;
+    align-items: flex-end;
+    text-align: right;
+  }
+
+  #inventoryTable td[data-label="Administrar"] .button,
+  #reportTable td[data-label="Acción"] .btn-detail-row {
+    width: 100%;
+    min-height: 36px;
+  }
+
+  #usersTable > tr > td:first-child {
+    min-height: 64px;
+  }
+
+  #usersTable .user-cell {
+    align-items: center;
+  }
+
+  #usersTable .user-cell > div {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  #usersTable .user-cell strong,
+  #usersTable .user-cell small {
+    display: block;
+    line-height: 1.25;
+  }
+
+  #usersTable .user-cell small {
+    font-size: 0.68rem;
+  }
+
+  .entry-card-header {
+    padding: 12px 14px !important;
+  }
+
+  .entry-form-body {
+    padding: 12px 14px !important;
+  }
+
+  .entry-section {
+    padding-bottom: 14px !important;
+    margin-bottom: 14px !important;
+  }
+
+  .section-title-wrap {
+    margin-bottom: 10px !important;
+  }
+
+  .entry-form-group,
+  .modal-form-group {
+    gap: 5px !important;
+  }
+
+  .entry-form-group label,
+  .modal-form-group label {
+    font-size: 0.73rem !important;
+  }
+
+  .entry-form-group .field-hint,
+  .modal-form-group .field-hint {
+    font-size: 0.65rem !important;
+    line-height: 1.25;
+  }
+
+  .official-input,
+  .entry-input,
+  .filter-input {
+    min-height: 43px !important;
+    height: 43px !important;
+  }
+
+  .entry-form-footer {
+    padding: 11px 14px !important;
+  }
+
+  .role-summary {
+    gap: 8px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .role-card {
+    padding: 11px 13px !important;
+  }
+
+  .role-card h3 {
+    margin-top: 6px;
+    font-size: 1rem;
+  }
+
+  .role-card p {
+    font-size: 0.7rem;
+    line-height: 1.3;
+  }
+
+  .official-modal-header,
+  .official-modal-body,
+  .official-modal-footer {
+    padding-left: 13px !important;
+    padding-right: 13px !important;
+  }
+
+  .official-modal-body {
+    padding-top: 11px !important;
+    padding-bottom: 11px !important;
+  }
+
+  .modal-form-grid {
+    gap: 10px !important;
+  }
+
+  .form-section {
+    padding: 12px !important;
+  }
+
+  .form-section-header {
+    margin-bottom: 10px !important;
+  }
+
+  .sale-summary {
+    gap: 12px !important;
+    padding: 13px !important;
+  }
+
+  .pos-item-preview {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .preview-item {
+    min-height: 52px;
+    padding: 7px 8px;
+  }
+}
+
+@media (max-width: 360px) {
+  .metric-grid,
+  .report-metrics,
+  .entries-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .table-wrap > table > tbody > tr > td[data-label],
+  .entry-history-table > tbody > tr > td[data-label],
+  .report-table-wrap > table > tbody > tr > td[data-label] {
+    padding: 8px !important;
+  }
+}
+
 
 

@@ -224,42 +224,42 @@ function renderEntriesTable() {
 
       return `
         <tr>
-          <td>
+          <td data-label="Fecha / hora">
             <div style="display: flex; flex-direction: column;">
               <strong style="color: #0f172a; font-size: 0.82rem;">${formattedTime}</strong>
               <small style="color: #94a3b8; font-size: 0.72rem;">${item.id || "REG"}</small>
             </div>
           </td>
-          <td>
+          <td data-label="Medicamento">
             <div style="display: flex; flex-direction: column;">
               <strong style="color: #0f172a; font-size: 0.88rem;">${item.name}</strong>
               <small style="color: #64748b; font-size: 0.74rem;">${item.supplier || "Distribuidora Central"}</small>
             </div>
           </td>
-          <td>
+          <td data-label="Lote">
             <code class="lot-badge" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 3px 8px; border-radius: 6px; font-weight: 700; color: #0f172a;">${item.lot}</code>
           </td>
-          <td>
+          <td data-label="Sucursal">
             <span class="branch-tag" style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 4px 10px; border-radius: 999px; font-size: 0.76rem; font-weight: 600; color: #334155;">${branchName}</span>
           </td>
-          <td>
+          <td data-label="Cantidad">
             <div style="font-weight: 800; font-family: 'Outfit', sans-serif; font-size: 0.95rem; color: #047857;">
               +${qty.toLocaleString()} <span style="font-size: 0.72rem; font-weight: 500; color: #64748b;">uds.</span>
             </div>
           </td>
-          <td style="font-weight: 600; color: #475569;">
+          <td data-label="Costo unitario" style="font-weight: 600; color: #475569;">
             Bs ${unitCost.toFixed(2)}
           </td>
-          <td style="font-weight: 800; font-family: 'Outfit', sans-serif; color: #0f172a;">
+          <td data-label="Total compra" style="font-weight: 800; font-family: 'Outfit', sans-serif; color: #0f172a;">
             Bs ${totalCost.toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </td>
-          <td>
+          <td data-label="Vencimiento">
             <div style="display: flex; flex-direction: column; gap: 3px;">
               <span style="font-size: 0.8rem; font-weight: 600; color: #334155;">${item.expiry || "—"}</span>
               <span class="status-badge ${expBadgeClass}" style="font-size: 0.68rem; padding: 2px 7px;">${exp.label}</span>
             </div>
           </td>
-          <td>
+          <td data-label="Responsable">
             <span style="font-size: 0.78rem; color: #475569; font-weight: 600;">
               ${item.responsible || "Personal Almacén"}
             </span>

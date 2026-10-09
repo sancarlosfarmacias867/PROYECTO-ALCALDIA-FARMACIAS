@@ -68,39 +68,39 @@ export async function renderInventoryModule(selectedBranchId = "all") {
 
         return `
           <tr class="${isOutOfStock ? "row-out-of-stock" : ""}">
-            <td>
+            <td data-label="Medicamento">
               <div class="product-cell">
                 <strong>${item.name}</strong>
                 <small class="text-muted">Cód: ${item.id}</small>
               </div>
             </td>
-            <td><span class="branch-tag">${branchName}</span></td>
-            <td><code class="lot-badge">${item.lot}</code></td>
-            <td>
+            <td data-label="Sucursal"><span class="branch-tag">${branchName}</span></td>
+            <td data-label="Lote"><code class="lot-badge">${item.lot}</code></td>
+            <td data-label="Existencias">
               <div class="stock-cell">
                 <span class="stock-qty ${isOutOfStock ? "out" : isLowStock ? "low" : "ok"}">${item.quantity}</span>
                 <small>${item.quantity === 1 ? "unidad" : "unidades"}</small>
               </div>
             </td>
-            <td>
+            <td data-label="Vencimiento">
               <div class="expiry-cell">
                 <span>${item.expiry}</span>
                 <span class="status-badge ${badgeClass}">${exp.label}</span>
               </div>
             </td>
-            <td class="admin-only ${admin ? "" : "hidden"}">Bs ${Number(item.unit_cost || 0).toFixed(2)}</td>
-            <td>
+            <td data-label="Costo unitario" class="admin-only ${admin ? "" : "hidden"}">Bs ${Number(item.unit_cost || 0).toFixed(2)}</td>
+            <td data-label="Precio de venta">
               <div class="price-cell">
                 <strong>Bs ${Number(item.sale_price || 0).toFixed(2)}</strong>
                 ${admin ? `<small class="text-muted">${item.margin}% margen</small>` : ""}
               </div>
             </td>
-            <td>
+            <td data-label="Estado">
               <span class="status-badge ${isOutOfStock ? "badge-danger" : isLowStock ? "badge-warning" : "badge-success"}">
                 ${isOutOfStock ? "Agotado" : isLowStock ? "Stock Crítico" : "Disponible"}
               </span>
             </td>
-            <td class="admin-only ${admin ? "" : "hidden"}">
+            <td data-label="Administrar" class="admin-only ${admin ? "" : "hidden"}">
               <button class="button small secondary edit-price-btn" data-id="${item.id}" data-name="${item.name}" data-cost="${item.unit_cost}" data-margin="${item.margin}" data-lot="${item.lot}">
                 <svg width="14" height="14"><use href="#i-grid"/></svg>
                 Margen

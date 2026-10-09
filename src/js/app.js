@@ -192,6 +192,9 @@ async function switchView(viewName) {
     viewEl.classList.toggle("active", viewEl.id === `view-${viewName}`);
   });
 
+  // Cada módulo comienza desde su encabezado, especialmente importante en móvil.
+  window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+
   // Cerrar sidebar y backdrop en móvil si está abierto
   document.getElementById("sidebar")?.classList.remove("open");
   document.getElementById("drawerBackdrop")?.classList.remove("open");
