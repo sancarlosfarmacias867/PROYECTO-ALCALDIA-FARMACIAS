@@ -30,7 +30,7 @@ export async function getBranches(forceRefresh = false) {
 }
 
 export function getBranchName(branchId, branchesList = cachedBranches || FALLBACK_BRANCHES) {
-  if (branchId === "all") return "Todas las sucursales";
+  if (branchId === "all") return "Consolidado (Todas las 6)";
   const branch = branchesList.find((b) => b.id === branchId);
   return branch ? branch.name : branchId;
 }

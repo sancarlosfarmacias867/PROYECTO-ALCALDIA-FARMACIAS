@@ -31,8 +31,10 @@ export async function renderUsersModule() {
 
   if (!usersContainer) return;
 
-  const users = await getUsers();
-  const branches = await getBranches();
+  const [users, branches] = await Promise.all([
+    getUsers(),
+    getBranches()
+  ]);
   cachedBranches = branches;
   cachedUsers = users;
 

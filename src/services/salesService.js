@@ -5,52 +5,79 @@
 import { supabaseQuery } from "../config/supabase.js";
 import { getCurrentUser } from "./authService.js";
 import { showToast } from "./toastService.js";
-import { getExpiryStatus, getInventory } from "./inventoryService.js";
+import { getExpiryStatus, getInventory, invalidateInventoryCache } from "./inventoryService.js";
 import { enqueueOfflineAction, notifyDataChanged } from "./syncService.js";
 
 const MOVEMENTS_CACHE_KEY = "farmacias_movements_cache";
 const INVENTORY_CACHE_KEY = "farmacias_inventory_cache";
+let movementsCache = null;
+let lastMovementsFetchTime = 0;
+const CACHE_TTL_MS = 60000; // 60 segundos de caché en memoria
 
-export async function getMovements(branchId = "all", month = null) {
-  try {
-    let endpoint = "movements?select=*&order=timestamp.desc";
-    const filters = [];
+export function invalidateMovementsCache() {
+  movementsCache = null;
+  lastMovementsFetchTime = 0;
+}
+
+export async function getMovements(branchId = "all", month = null, forceRefresh = false) {
+  const now = Date.now();
+
+  // 1. Respuesta instantánea en memoria si la caché está vigente
+  if (movementsCache && !forceRefresh && (now - lastMovementsFetchTime < CACHE_TTL_MS)) {
+    let list = movementsCache;
     if (branchId && branchId !== "all") {
-      filters.push(`branch_id=eq.${encodeURIComponent(branchId)}`);
+      list = list.filter((m) => m.branch_id === branchId);
     }
     if (month) {
-      filters.push(`date=gte.${month}-01&date=lte.${month}-31`);
+      list = list.filter((m) => m.date && m.date.startsWith(month));
     }
-    if (filters.length > 0) {
-      endpoint += `&${filters.join("&")}`;
-    }
-    const data = await supabaseQuery(endpoint);
+    return list;
+  }
+
+  // 2. Consulta remota de todos los movimientos a Supabase
+  try {
+    const data = await supabaseQuery("movements?select=*&order=timestamp.desc");
     if (data && data.length > 0) {
-      if (branchId === "all" && !month) {
-        try {
-          localStorage.setItem(MOVEMENTS_CACHE_KEY, JSON.stringify(data));
-        } catch (_) {}
+      movementsCache = data;
+      lastMovementsFetchTime = now;
+      try {
+        localStorage.setItem(MOVEMENTS_CACHE_KEY, JSON.stringify(data));
+      } catch (_) {}
+
+      let list = movementsCache;
+      if (branchId && branchId !== "all") {
+        list = list.filter((m) => m.branch_id === branchId);
       }
-      return data;
+      if (month) {
+        list = list.filter((m) => m.date && m.date.startsWith(month));
+      }
+      return list;
     }
   } catch (err) {
     console.warn("Fallo de red al consultar movimientos de Supabase, usando respaldo local:", err);
   }
 
-  // Respaldo local si no hay conexión
-  try {
-    const cached = localStorage.getItem(MOVEMENTS_CACHE_KEY);
-    if (cached) {
-      let list = JSON.parse(cached);
-      if (branchId && branchId !== "all") {
-        list = list.filter((m) => m.branch_id === branchId);
+  // 3. Respaldo local si no hay conexión o falla la red
+  if (!movementsCache) {
+    try {
+      const cached = localStorage.getItem(MOVEMENTS_CACHE_KEY);
+      if (cached) {
+        movementsCache = JSON.parse(cached);
+        lastMovementsFetchTime = now;
       }
-      if (month) {
-        list = list.filter((m) => m.date.startsWith(month));
-      }
-      return list;
+    } catch (_) {}
+  }
+
+  if (movementsCache) {
+    let list = movementsCache;
+    if (branchId && branchId !== "all") {
+      list = list.filter((m) => m.branch_id === branchId);
     }
-  } catch (_) {}
+    if (month) {
+      list = list.filter((m) => m.date && m.date.startsWith(month));
+    }
+    return list;
+  }
 
   return [];
 }
@@ -140,6 +167,11 @@ export async function processSale({ branchId, type, items, patientName = "", sus
     const allMovs = JSON.parse(localStorage.getItem(MOVEMENTS_CACHE_KEY) || "[]");
     allMovs.unshift(movementData);
     localStorage.setItem(MOVEMENTS_CACHE_KEY, JSON.stringify(allMovs));
+
+    if (movementsCache) {
+      movementsCache.unshift(movementData);
+    }
+    invalidateInventoryCache();
   } catch (_) {}
 
   // 3. Persistir en Supabase o encolar en Outbox si falla la red

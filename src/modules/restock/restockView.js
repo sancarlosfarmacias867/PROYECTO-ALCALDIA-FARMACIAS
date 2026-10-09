@@ -19,11 +19,19 @@ export async function renderRestockModule(selectedBranchId = "all") {
   const user = getCurrentUser();
   const isUserAdmin = isAdmin();
 
-  cachedBranches = await getBranches();
-
   // Si no es admin, SIEMPRE forzar a su sucursal asignada
   const isRestricted = !isUserAdmin && user?.branch_id !== "all";
   currentTargetBranch = isRestricted ? user.branch_id : selectedBranchId;
+
+  const [branches, entries] = await Promise.all([
+    getBranches(),
+    getEntries(currentTargetBranch).catch((err) => {
+      console.warn("No se pudieron cargar ingresos remotos:", err);
+      return [];
+    })
+  ]);
+  cachedBranches = branches;
+  cachedEntries = entries;
 
   // 1. Panel de KPIs: Solo visible para el Administrador
   const kpiGrid = document.querySelector(".entries-kpi-grid");
@@ -86,8 +94,9 @@ export async function renderRestockModule(selectedBranchId = "all") {
     pricingNote.style.display = !isUserAdmin ? "flex" : "none";
   }
 
-  // 6. Cargar ingresos históricos y calcular KPIs
-  await loadAndRenderEntries();
+  // 6. Actualizar KPIs y tabla con datos cargados
+  updateKpiStats(cachedEntries);
+  renderEntriesTable();
 
   // 7. Recalcular valores en vivo del formulario
   updateLiveCalculations();
@@ -315,7 +324,7 @@ function updateExpiryFeedback() {
   const exp = getExpiryStatus(val);
 
   if (exp.status === "expired") {
-    feedbackEl.textContent = "⚠️ Lote vencido (no se permite el ingreso)";
+    feedbackEl.textContent = "Lote vencido (no se permite el ingreso)";
     feedbackEl.className = "field-hint text-danger";
   } else if (exp.status === "red") {
     feedbackEl.textContent = `Vence en ${exp.months} meses (plazo crítico)`;

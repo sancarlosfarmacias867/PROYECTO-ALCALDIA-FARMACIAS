@@ -17,6 +17,10 @@ import { renderPosModule, initPosEvents } from "../modules/pos/posView.js";
 import { renderRestockModule, initRestockEvents } from "../modules/restock/restockView.js";
 import { renderUsersModule, initUserDialog } from "../modules/users/usersView.js";
 import { renderAnalyticsModule } from "../modules/analytics/analyticsView.js";
+import { getInventory, getExpiryStatus, invalidateInventoryCache } from "../services/inventoryService.js";
+import { invalidateMovementsCache } from "../services/salesService.js";
+import { invalidateEntriesCache } from "../services/entriesService.js";
+import { invalidateUsersCache } from "../services/usersService.js";
 
 let currentView = "dashboard";
 let selectedBranch = "all";
@@ -59,6 +63,7 @@ async function initApp() {
   // 6. Cargar la vista activa si hay sesión iniciada
   if (user) {
     await loadActiveView();
+    updateNotificationsUI();
   }
 }
 
@@ -97,7 +102,7 @@ async function populateBranchSelector() {
     branchSelect.classList.add("locked-branch");
 
     if (branchLabel) {
-      branchLabel.innerHTML = `Sucursal Asignada 🔒`;
+      branchLabel.innerHTML = `Sucursal Asignada`;
       branchLabel.title = "Sucursal designada por la administración municipal";
     }
   }
@@ -106,6 +111,7 @@ async function populateBranchSelector() {
     if (user.role === "admin") {
       selectedBranch = e.target.value;
       await loadActiveView();
+      updateNotificationsUI();
     }
   };
 }
@@ -254,6 +260,7 @@ function initGlobalEvents() {
   const closeAlerts = document.getElementById("closeAlerts");
 
   notifBtn?.addEventListener("click", async () => {
+    await updateNotificationsUI();
     alertDrawer?.classList.add("open");
     drawerBackdrop?.classList.add("open");
   });
@@ -288,23 +295,167 @@ function initGlobalEvents() {
     await populateBranchSelector();
     applyRoleVisibility();
     await loadActiveView();
+    await updateNotificationsUI();
   });
 
   // Evento de sincronización y cambio de datos en tiempo real
   let reloadTimeout = null;
   window.addEventListener("pharmacy-data-change", () => {
-    // Evitar recargar vistas de forma disruptiva si un diálogo modal o un input de texto está activo
     const activeDialog = document.querySelector("dialog[open]");
     if (activeDialog) return;
 
     if (reloadTimeout) clearTimeout(reloadTimeout);
     reloadTimeout = setTimeout(async () => {
+      invalidateInventoryCache();
+      invalidateMovementsCache();
+      invalidateEntriesCache();
+      invalidateUsersCache();
       const user = getCurrentUser();
       if (user) {
         await loadActiveView();
+        updateNotificationsUI();
       }
     }, 450);
   });
+}
+
+/**
+ * Actualizar contador y contenido de notificaciones según el rol y sucursal
+ */
+export async function updateNotificationsUI() {
+  const user = getCurrentUser();
+  if (!user) return;
+
+  const branches = await getBranches();
+  const alertCountEl = document.getElementById("alertCount");
+  const drawerAlertsEl = document.getElementById("drawerAlerts");
+
+  // Al administrador le salen todos ("all"); a cada sucursal individual solo su inventario
+  const branchFilter = user.role === "admin" ? "all" : (user.branch_id || "all");
+  const inventory = await getInventory(branchFilter, false);
+
+  // Filtrar medicamentos con existencias que vencen en menos de 3 meses (rojo/vencido) o hasta 6 meses (amarillo)
+  const expiringItems = (inventory || [])
+    .filter((item) => Number(item.quantity) > 0)
+    .map((item) => {
+      const exp = getExpiryStatus(item.expiry);
+      return { ...item, expiryStatus: exp };
+    })
+    .filter((item) =>
+      item.expiryStatus.status === "expired" ||
+      item.expiryStatus.status === "red" ||
+      item.expiryStatus.status === "yellow"
+    )
+    .sort((a, b) => new Date(a.expiry) - new Date(b.expiry));
+
+  // Actualizar contador en la campana
+  if (alertCountEl) {
+    alertCountEl.textContent = expiringItems.length;
+    alertCountEl.style.display = expiringItems.length > 0 ? "inline-flex" : "none";
+  }
+
+  // Renderizar contenido del panel lateral
+  if (drawerAlertsEl) {
+    if (expiringItems.length === 0) {
+      drawerAlertsEl.innerHTML = `
+        <div class="drawer-empty-state">
+          <div class="drawer-empty-icon">
+            <svg width="24" height="24"><use href="#i-check"/></svg>
+          </div>
+          <h3>Sin alertas de vencimiento</h3>
+          <p>${
+            user.role === "admin"
+              ? "No se registran medicamentos próximos a vencer en el inventario municipal."
+              : "No se registran medicamentos próximos a vencer en el inventario de esta sucursal."
+          }</p>
+        </div>
+      `;
+    } else {
+      drawerAlertsEl.innerHTML = `
+        <span class="drawer-alerts-summary">
+          ${expiringItems.length} lote(s) en seguimiento de vencimiento
+        </span>
+        <div class="drawer-alerts-list">
+          ${expiringItems
+            .map((item) => {
+              const branchName = getBranchName(item.branch_id, branches);
+              const isUrgent = item.expiryStatus.status === "expired" || item.expiryStatus.status === "red";
+              const badgeClass = isUrgent ? "badge-danger" : "badge-warning";
+              const statusText =
+                item.expiryStatus.status === "expired"
+                  ? "Lote vencido"
+                  : item.expiryStatus.status === "red"
+                  ? `Vence en ${item.expiryStatus.months} mes(es) (Crítico)`
+                  : `Vence en ${item.expiryStatus.months} mes(es) (Atención)`;
+
+              return `
+                <div class="drawer-alert-card ${isUrgent ? "urgent" : "warning"}" data-name="${item.name}" data-branch="${item.branch_id}">
+                  <div class="drawer-alert-top">
+                    <strong class="drawer-alert-title">${item.name}</strong>
+                    <span class="status-badge ${badgeClass}">${statusText}</span>
+                  </div>
+                  <div class="drawer-alert-meta">
+                    <span class="drawer-alert-lot">LOTE: ${item.lot}</span>
+                    <span class="drawer-alert-stock">Stock: ${item.quantity} unidades</span>
+                    ${user.role === "admin" ? `<span class="drawer-alert-branch">${branchName}</span>` : ""}
+                  </div>
+                  <div class="drawer-alert-bottom">
+                    <span class="drawer-alert-date">Vencimiento: ${item.expiry}</span>
+                    <button type="button" class="btn-drawer-goto">
+                      <span>Ver en inventario</span>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+                    </button>
+                  </div>
+                </div>
+              `;
+            })
+            .join("")}
+        </div>
+      `;
+
+      // Evento de redirección al inventario al hacer clic en cualquier tarjeta
+      drawerAlertsEl.querySelectorAll(".drawer-alert-card").forEach((card) => {
+        card.addEventListener("click", async () => {
+          const medName = card.getAttribute("data-name");
+          const medBranch = card.getAttribute("data-branch");
+          await navigateToInventory(medName, medBranch);
+        });
+      });
+    }
+  }
+}
+
+/**
+ * Cerrar panel de alertas y redirigir al inventario filtrando por el medicamento
+ */
+async function navigateToInventory(medicineName = "", branchId = "") {
+  const user = getCurrentUser();
+
+  // Cerrar el panel de notificaciones
+  document.getElementById("alertDrawer")?.classList.remove("open");
+  document.getElementById("drawerBackdrop")?.classList.remove("open");
+
+  // Si es admin y el producto es de una sucursal específica, sincronizar selector de sucursal
+  if (user?.role === "admin" && branchId) {
+    selectedBranch = branchId;
+    const branchSelect = document.getElementById("branchSelect");
+    if (branchSelect) branchSelect.value = branchId;
+  }
+
+  // Redirigir al módulo de Inventario
+  await switchView("inventory");
+
+  // Filtrar automáticamente por el nombre del medicamento en la tabla
+  if (medicineName) {
+    setTimeout(() => {
+      const searchInput = document.getElementById("inventorySearch");
+      if (searchInput) {
+        searchInput.value = medicineName;
+        searchInput.dispatchEvent(new Event("input"));
+        searchInput.focus();
+      }
+    }, 120);
+  }
 }
 
 // Iniciar aplicación

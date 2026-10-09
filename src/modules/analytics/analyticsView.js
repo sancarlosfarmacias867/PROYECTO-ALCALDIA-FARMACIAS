@@ -25,9 +25,11 @@ export async function renderAnalyticsModule(selectedBranchId = "all") {
   const reportSearch = document.getElementById("reportSearch");
   const clearFiltersBtn = document.getElementById("clearReportFilters");
 
-  const branches = await getBranches();
-  const movements = await getMovements();
-  const entries = await getEntries();
+  const [branches, movements, entries] = await Promise.all([
+    getBranches(),
+    getMovements(),
+    getEntries()
+  ]);
 
   // Inicializar selector de sucursales si aún no tiene opciones
   if (reportBranch && reportBranch.options.length <= 1) {

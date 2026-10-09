@@ -16,18 +16,18 @@ export async function renderInventoryModule(selectedBranchId = "all") {
   if (!tableBody) return;
 
   const user = getCurrentUser();
-  const branches = await getBranches();
-  
-  // Si no es admin, forzar estrictamente a su sucursal asignada
   const activeBranch = (user?.role !== "admin" && user?.branch_id !== "all") ? user.branch_id : selectedBranchId;
+
+  const [branches, inventory] = await Promise.all([
+    getBranches(),
+    getInventory(activeBranch)
+  ]);
   
   if (inventorySubtitle) {
     inventorySubtitle.textContent = activeBranch === "all" 
       ? "Existencias consolidadas de las seis farmacias municipales de San Carlos."
       : `Inventario y lotes vigentes en sucursal ${getBranchName(activeBranch, branches)}.`;
   }
-
-  const inventory = await getInventory(activeBranch, true);
 
   function filterAndRender() {
     const term = (searchInput?.value || "").toLowerCase();
@@ -154,7 +154,7 @@ function openPriceModal(product) {
     if (resultEl) resultEl.textContent = `Bs ${finalPrice.toFixed(2)}`;
   }
 
-  marginInput?.addEventListener("input", updateCalculatedPrice);
+  if (marginInput) marginInput.oninput = updateCalculatedPrice;
   updateCalculatedPrice();
 
   dialog.showModal();
@@ -175,14 +175,28 @@ export function initPriceDialog() {
     const formData = new FormData(form);
     const productId = formData.get("productId");
     const margin = formData.get("margin");
+    const submitBtn = form.querySelector('button[type="submit"]');
 
     try {
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<span>Guardando...</span>`;
+      }
       await updateProductMargin(productId, margin);
       dialog.close();
       const branchSelect = document.getElementById("branchSelect");
       await renderInventoryModule(branchSelect?.value || "all");
+      showToast("Margen actualizado", "El precio de venta autorizado fue configurado exitosamente.", "success");
     } catch (err) {
       showToast("Error", err.message, "error");
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `
+          <svg width="18" height="18"><use href="#i-check"/></svg>
+          <span>Guardar Precio Autorizado</span>
+        `;
+      }
     }
   });
 }

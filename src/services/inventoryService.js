@@ -9,37 +9,57 @@ import { enqueueOfflineAction, notifyDataChanged } from "./syncService.js";
 
 const INVENTORY_CACHE_KEY = "farmacias_inventory_cache";
 let inventoryCache = null;
+let lastInventoryFetchTime = 0;
+const CACHE_TTL_MS = 60000; // 60 segundos de caché en memoria para respuesta instantánea
+
+export function invalidateInventoryCache() {
+  inventoryCache = null;
+  lastInventoryFetchTime = 0;
+}
 
 export async function getInventory(branchId = "all", forceRefresh = false) {
-  try {
-    let endpoint = "inventory?select=*&order=name.asc,expiry.asc";
+  const now = Date.now();
+
+  // 1. Respuesta instantánea en memoria si la caché está vigente y no se forzó recarga
+  if (inventoryCache && !forceRefresh && (now - lastInventoryFetchTime < CACHE_TTL_MS)) {
     if (branchId && branchId !== "all") {
-      endpoint += `&branch_id=eq.${encodeURIComponent(branchId)}`;
+      return inventoryCache.filter((x) => x.branch_id === branchId);
     }
-    const data = await supabaseQuery(endpoint);
+    return inventoryCache;
+  }
+
+  // 2. Consulta a Supabase (cargamos el inventario completo para alimentar la caché de todas las sucursales)
+  try {
+    const data = await supabaseQuery("inventory?select=*&order=name.asc,expiry.asc");
     if (data && data.length > 0) {
-      if (branchId === "all") {
-        inventoryCache = data;
-        try {
-          localStorage.setItem(INVENTORY_CACHE_KEY, JSON.stringify(data));
-        } catch (_) {}
+      inventoryCache = data;
+      lastInventoryFetchTime = now;
+      try {
+        localStorage.setItem(INVENTORY_CACHE_KEY, JSON.stringify(data));
+      } catch (_) {}
+
+      if (branchId && branchId !== "all") {
+        return inventoryCache.filter((x) => x.branch_id === branchId);
       }
-      return data;
+      return inventoryCache;
     }
   } catch (err) {
     console.warn("Fallo de red al obtener inventario de Supabase, usando respaldo local:", err);
   }
 
-  // Respaldo desde memoria o localStorage
+  // 3. Respaldo desde memoria o localStorage si falla la red
   if (!inventoryCache) {
     try {
       const saved = localStorage.getItem(INVENTORY_CACHE_KEY);
-      if (saved) inventoryCache = JSON.parse(saved);
+      if (saved) {
+        inventoryCache = JSON.parse(saved);
+        lastInventoryFetchTime = now;
+      }
     } catch (_) {}
   }
 
   if (inventoryCache) {
-    if (branchId !== "all") {
+    if (branchId && branchId !== "all") {
       return inventoryCache.filter((x) => x.branch_id === branchId);
     }
     return inventoryCache;
@@ -68,6 +88,12 @@ export async function updateProductMargin(productId, marginPercent) {
   product.margin = margin;
   product.sale_price = salePrice;
   product.price_configured = true;
+  if (inventoryCache) {
+    const idx = inventoryCache.findIndex((x) => x.id === productId);
+    if (idx !== -1) {
+      inventoryCache[idx] = { ...inventoryCache[idx], margin, sale_price: salePrice, price_configured: true };
+    }
+  }
   try {
     localStorage.setItem(INVENTORY_CACHE_KEY, JSON.stringify(allInv));
   } catch (_) {}

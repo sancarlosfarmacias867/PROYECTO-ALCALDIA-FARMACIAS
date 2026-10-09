@@ -167,7 +167,7 @@
             <select id="branchSelect"></select>
           </div>
           <div class="topbar-actions">
-            <button class="icon-button notification-button" id="notificationButton" data-roles="admin,vendedor" aria-label="Ver alertas"><svg><use href="#i-bell"/></svg><i id="alertCount">0</i></button>
+            <button class="icon-button notification-button" id="notificationButton" data-roles="admin,vendedor,tecnico" aria-label="Ver alertas"><svg><use href="#i-bell"/></svg><i id="alertCount">0</i></button>
             <div class="profile"><span>MA</span><div><strong id="profileName">María Aguilera</strong><small id="profileRole">Administradora</small></div></div>
           </div>
         </header>
@@ -290,10 +290,23 @@
 
                   <div class="sale-add-grid">
                     <div class="entry-form-group product-select-group">
-                      <label for="saleProduct"><span>Medicamento y lote disponible</span><span class="req">*</span></label>
-                      <div class="official-input-wrap">
-                        <svg class="official-input-icon"><use href="#i-box"/></svg>
-                        <select id="saleProduct" class="official-input official-select"></select>
+                      <label for="comboboxTrigger"><span>Medicamento y lote disponible</span><span class="req">*</span></label>
+                      <div class="pos-combobox" id="posCombobox">
+                        <div class="pos-combobox-trigger official-input" id="comboboxTrigger" tabindex="0" role="combobox" aria-expanded="false" aria-haspopup="listbox">
+                          <svg class="official-input-icon"><use href="#i-box"/></svg>
+                          <span class="pos-combobox-label" id="comboboxLabel">Seleccionar medicamento...</span>
+                          <svg class="pos-combobox-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+                        </div>
+                        <div class="pos-combobox-dropdown hidden" id="comboboxDropdown">
+                          <div class="pos-combobox-search-wrap">
+                            <svg class="pos-combobox-search-icon" width="16" height="16"><use href="#i-search"/></svg>
+                            <input type="text" id="comboboxSearchInput" class="pos-combobox-search-input" placeholder="Buscar medicamento por nombre o lote..." autocomplete="off" />
+                            <button type="button" class="pos-combobox-clear" id="comboboxClearBtn" title="Limpiar búsqueda" style="display: none;">&times;</button>
+                          </div>
+                          <div class="pos-combobox-options" id="comboboxOptions" role="listbox"></div>
+                        </div>
+                        <!-- Select subyacente para compatibilidad total -->
+                        <select id="saleProduct" class="pos-hidden-select" tabindex="-1" aria-hidden="true"></select>
                       </div>
                     </div>
 
@@ -381,11 +394,11 @@
                   <div class="payment-options">
                     <label class="pay-option">
                       <input type="radio" name="payMethod" value="efectivo" checked />
-                      <span>💵 Efectivo</span>
+                      <span>Efectivo</span>
                     </label>
                     <label class="pay-option">
                       <input type="radio" name="payMethod" value="qr" />
-                      <span>📱 QR / Banco</span>
+                      <span>QR / Transferencia</span>
                     </label>
                   </div>
                 </div>
@@ -860,7 +873,18 @@
 
     <div class="drawer-backdrop" id="drawerBackdrop"></div>
     <aside class="alert-drawer" id="alertDrawer" aria-label="Alertas de vencimiento">
-      <div class="drawer-heading"><div><span class="eyebrow">PRIORIDAD</span><h2>Alertas de vencimiento</h2></div><button class="icon-button" id="closeAlerts" aria-label="Cerrar alertas"><svg><use href="#i-close"/></svg></button></div><div id="drawerAlerts"></div>
+      <div class="drawer-heading">
+        <div>
+          <span class="eyebrow">CONTROL DE VENCIMIENTOS</span>
+          <h2>Alertas de Vencimiento</h2>
+        </div>
+        <button class="icon-button" id="closeAlerts" aria-label="Cerrar alertas">
+          <svg><use href="#i-close"/></svg>
+        </button>
+      </div>
+      <div class="drawer-body">
+        <div id="drawerAlerts"></div>
+      </div>
     </aside>
 
     <dialog id="userDialog" class="official-modal">
@@ -998,17 +1022,89 @@
       </form>
     </dialog>
 
-    <dialog id="priceDialog">
-      <form method="dialog" id="priceForm">
-        <div class="dialog-heading"><div><span class="eyebrow">SOLO ADMINISTRACIÓN</span><h2>Configurar precio de venta</h2></div><button type="button" class="icon-button" data-close-price aria-label="Cerrar"><svg><use href="#i-close"/></svg></button></div>
-        <div class="price-dialog-body">
-          <input type="hidden" name="productId" />
-          <div class="price-product"><span class="form-icon"><svg><use href="#i-box"/></svg></span><div><strong id="priceProductName"></strong><small id="priceProductMeta"></small></div></div>
-          <div class="price-cost-row"><span>Costo unitario registrado</span><strong id="priceUnitCost"></strong></div>
-          <label class="custom-margin"><span>Porcentaje de ganancia autorizado</span><div><input type="number" name="margin" min="0" step="0.01" required inputmode="decimal" /><b>%</b></div><small>Puede ingresar cualquier porcentaje igual o mayor a cero.</small></label>
-          <div class="price-result"><span>Precio final para vendedores</span><strong id="priceResult"></strong><small>Este precio quedará bloqueado en ventas.</small></div>
+    <dialog id="priceDialog" class="official-modal">
+      <form method="dialog" id="priceForm" class="official-modal-form">
+        <div class="official-modal-header">
+          <div class="official-modal-title-wrap">
+            <div class="official-modal-icon">
+              <svg><use href="#i-chart"/></svg>
+            </div>
+            <div>
+              <span class="official-modal-badge">SOLO ADMINISTRACIÓN</span>
+              <h2>Configurar Margen de Venta</h2>
+              <p class="official-modal-subtitle">Defina el margen porcentual aplicable sobre el costo unitario de adquisición.</p>
+            </div>
+          </div>
+          <button type="button" class="official-modal-close" data-close-price aria-label="Cerrar ventana">
+            <svg><use href="#i-close"/></svg>
+          </button>
         </div>
-        <div class="dialog-actions"><button type="button" class="button secondary" data-close-price>Cancelar</button><button type="submit" class="button primary"><svg><use href="#i-check"/></svg>Guardar precio</button></div>
+
+        <div class="official-modal-body">
+          <input type="hidden" name="productId" />
+
+          <!-- Tarjeta de información del medicamento -->
+          <div class="price-product-card">
+            <div class="price-product-header">
+              <div class="price-product-icon">
+                <svg><use href="#i-box"/></svg>
+              </div>
+              <div class="price-product-details">
+                <strong id="priceProductName" class="price-product-title">Medicamento</strong>
+                <span id="priceProductMeta" class="price-product-badge">Lote: SC-0000</span>
+              </div>
+            </div>
+            <div class="price-metrics-grid">
+              <div class="price-metric-item">
+                <span class="price-metric-label">Costo unitario registrado:</span>
+                <strong id="priceUnitCost" class="price-metric-val">Bs 0.00</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Campo de Porcentaje de Margen -->
+          <div class="modal-form-group" style="margin-top: 18px;">
+            <label for="priceMarginInput">
+              <span>Porcentaje de ganancia autorizado</span>
+              <span class="required-indicator">*</span>
+            </label>
+            <div class="official-input-wrap margin-input-wrap">
+              <input
+                type="number"
+                id="priceMarginInput"
+                name="margin"
+                min="0"
+                step="0.01"
+                required
+                inputmode="decimal"
+                class="official-input"
+                placeholder="Ej.: 30"
+              />
+              <span class="input-suffix-badge">%</span>
+            </div>
+            <span class="field-hint">Puede ingresar cualquier porcentaje igual o superior a cero.</span>
+          </div>
+
+          <!-- Tarjeta de Resultado Calculado -->
+          <div class="price-calculation-card">
+            <div class="price-calc-info">
+              <span class="price-calc-label">Precio final para venta en mostrador</span>
+              <span class="price-calc-note">Calculado automáticamente (Costo + Margen)</span>
+            </div>
+            <div class="price-calc-amount">
+              <strong id="priceResult" class="price-calc-val">Bs 0.00</strong>
+              <small class="price-calc-status">Precio bloqueado para vendedores</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="official-modal-footer">
+          <button type="button" class="btn-official-cancel" data-close-price>Cancelar</button>
+          <button type="submit" class="btn-official-submit-modal">
+            <svg width="18" height="18"><use href="#i-check"/></svg>
+            <span>Guardar Precio Autorizado</span>
+          </button>
+        </div>
       </form>
     </dialog>
 

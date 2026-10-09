@@ -8,6 +8,14 @@ import { showToast } from "./toastService.js";
 import { enqueueOfflineAction, notifyDataChanged } from "./syncService.js";
 
 const USERS_CACHE_KEY = "farmacias_custom_users";
+let usersCache = null;
+let lastUsersFetchTime = 0;
+const CACHE_TTL_MS = 60000; // 60 segundos de caché en memoria
+
+export function invalidateUsersCache() {
+  usersCache = null;
+  lastUsersFetchTime = 0;
+}
 
 function sanitizeUser(u) {
   if (!u) return u;
@@ -21,11 +29,21 @@ function sanitizeUser(u) {
   return { ...u, name };
 }
 
-export async function getUsers() {
+export async function getUsers(forceRefresh = false) {
+  const now = Date.now();
+
+  // 1. Respuesta instantánea en memoria si la caché está vigente
+  if (usersCache && !forceRefresh && (now - lastUsersFetchTime < CACHE_TTL_MS)) {
+    return usersCache;
+  }
+
+  // 2. Consulta remota a Supabase
   try {
     const data = await supabaseQuery("app_users?select=*&order=name.asc");
     if (data && data.length > 0) {
       const sanitized = data.map(sanitizeUser);
+      usersCache = sanitized;
+      lastUsersFetchTime = now;
       try {
         localStorage.setItem(USERS_CACHE_KEY, JSON.stringify(sanitized));
       } catch (_) {}
@@ -35,14 +53,19 @@ export async function getUsers() {
     console.warn("Aviso: usando usuarios en caché local por desconexión:", err);
   }
 
-  try {
-    const cached = localStorage.getItem(USERS_CACHE_KEY);
-    if (cached) {
-      const parsed = JSON.parse(cached);
-      return parsed.map(sanitizeUser);
-    }
-  } catch (_) {}
-  return [];
+  // 3. Respaldo desde localStorage si falla la red
+  if (!usersCache) {
+    try {
+      const cached = localStorage.getItem(USERS_CACHE_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        usersCache = parsed.map(sanitizeUser);
+        lastUsersFetchTime = now;
+      }
+    } catch (_) {}
+  }
+
+  return usersCache || [];
 }
 
 export async function createUser({ name, email, pin, role, branchId }) {
@@ -117,6 +140,7 @@ export async function createUser({ name, email, pin, role, branchId }) {
     });
   } catch (_) {}
 
+  invalidateUsersCache();
   notifyDataChanged("users");
   showToast("Usuario registrado", `${cleanName} fue dado de alta como ${getRoleLabel(role)} con éxito.`);
   return newUser;
@@ -168,6 +192,7 @@ export async function updateUser(userId, fields) {
     );
   }
 
+  invalidateUsersCache();
   notifyDataChanged("users");
   showToast("Usuario actualizado", "Los datos y credenciales han sido guardados correctamente.");
   return true;
@@ -209,6 +234,7 @@ export async function toggleUserActive(userId, currentStatus) {
     );
   }
 
+  invalidateUsersCache();
   notifyDataChanged("users");
   showToast(
     newStatus ? "Usuario activado" : "Usuario desactivado",
@@ -247,6 +273,7 @@ export async function deleteUser(userId) {
     );
   }
 
+  invalidateUsersCache();
   notifyDataChanged("users");
   showToast("Usuario eliminado", "El usuario ha sido retirado definitivamente del sistema.");
   return true;

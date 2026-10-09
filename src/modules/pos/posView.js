@@ -11,50 +11,38 @@ import { showToast } from "../../services/toastService.js";
 let currentSaleType = "normal";
 let cart = [];
 let currentAvailableStock = [];
+let currentActiveBranch = "all";
+let currentBranchesList = [];
 
 export async function renderPosModule(selectedBranchId = "all") {
   const user = getCurrentUser();
-  const branches = await getBranches();
 
   // Si el usuario no es admin, forzar estrictamente a su sucursal asignada
   const activeBranch =
     user?.role !== "admin" && user?.branch_id !== "all"
       ? user.branch_id
-      : selectedBranchId === "all"
-      ? branches[0].id
       : selectedBranchId;
+
+  currentActiveBranch = activeBranch;
+
+  const [branches, inventory] = await Promise.all([
+    getBranches(),
+    getInventory(activeBranch)
+  ]);
+  currentBranchesList = branches;
 
   const saleBranchLabel = document.getElementById("saleBranchLabel");
   if (saleBranchLabel) {
     saleBranchLabel.textContent = getBranchName(activeBranch, branches);
   }
 
-  // Cargar inventario disponible de la sucursal
-  const inventory = await getInventory(activeBranch, true);
+  // Cargar inventario disponible de la sucursal o consolidado
   currentAvailableStock = inventory.filter((item) => item.quantity > 0);
 
   // Ordenar por FEFO (First Expired, First Out)
   currentAvailableStock.sort((a, b) => new Date(a.expiry) - new Date(b.expiry));
 
-  const productSelect = document.getElementById("saleProduct");
-  if (productSelect) {
-    if (currentAvailableStock.length === 0) {
-      productSelect.innerHTML = `<option value="">Sin medicamentos disponibles en esta sucursal</option>`;
-    } else {
-      productSelect.innerHTML = currentAvailableStock
-        .map((item) => {
-          const exp = getExpiryStatus(item.expiry);
-          const priceStr =
-            currentSaleType === "sus" ? "SUS (Gratuito)" : `Bs ${Number(item.sale_price).toFixed(2)}`;
-          return `
-            <option value="${item.id}" data-price="${item.sale_price}" data-cost="${item.unit_cost}" data-stock="${item.quantity}" data-lot="${item.lot}" data-name="${item.name}" data-expiry="${item.expiry}">
-              ${item.name} | Lote: ${item.lot} (Stock: ${item.quantity} · ${priceStr})
-            </option>
-          `;
-        })
-        .join("");
-    }
-  }
+  populateProductSelect();
 
   // Actualizar estado de campos SUS y métodos de pago
   updateModeUI();
@@ -64,6 +52,187 @@ export async function renderPosModule(selectedBranchId = "all") {
 
   // Actualizar lista del carrito
   updateCartUI();
+}
+
+function escapeHtml(str) {
+  return String(str || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+/**
+ * Llenar el select oculto y las opciones del combobox desplegable
+ */
+function populateProductSelect() {
+  const productSelect = document.getElementById("saleProduct");
+  if (!productSelect) return;
+
+  const isConsolidated = currentActiveBranch === "all";
+
+  if (currentAvailableStock.length === 0) {
+    productSelect.innerHTML = `<option value="">Sin medicamentos disponibles en esta sucursal</option>`;
+    selectProductById("");
+  } else {
+    productSelect.innerHTML = currentAvailableStock
+      .map((item) => {
+        const priceStr =
+          currentSaleType === "sus" ? "SUS (Gratuito)" : `Bs ${Number(item.sale_price).toFixed(2)}`;
+        const branchTag = isConsolidated ? ` · ${getBranchName(item.branch_id, currentBranchesList)}` : "";
+        return `
+          <option value="${item.id}" data-branch="${item.branch_id}" data-price="${item.sale_price}" data-cost="${item.unit_cost}" data-stock="${item.quantity}" data-lot="${item.lot}" data-name="${item.name}" data-expiry="${item.expiry}">
+            ${item.name} | Lote: ${item.lot}${branchTag} (Stock: ${item.quantity} · ${priceStr})
+          </option>
+        `;
+      })
+      .join("");
+
+    // Seleccionar por defecto el primero según FEFO
+    selectProductById(currentAvailableStock[0].id);
+  }
+
+  const searchInput = document.getElementById("comboboxSearchInput");
+  renderComboboxOptions(searchInput?.value.trim().toLowerCase() || "");
+}
+
+/**
+ * Renderizar las opciones dentro del desplegable con filtro en tiempo real
+ */
+function renderComboboxOptions(query = "") {
+  const optionsContainer = document.getElementById("comboboxOptions");
+  const clearBtn = document.getElementById("comboboxClearBtn");
+  const productSelect = document.getElementById("saleProduct");
+  if (!optionsContainer) return;
+
+  if (clearBtn) {
+    clearBtn.style.display = query ? "block" : "none";
+  }
+
+  let items = currentAvailableStock;
+  if (query) {
+    items = currentAvailableStock.filter((item) => {
+      const name = (item.name || "").toLowerCase();
+      const lot = (item.lot || "").toLowerCase();
+      return name.includes(query) || lot.includes(query);
+    });
+  }
+
+  if (items.length === 0) {
+    optionsContainer.innerHTML = `
+      <div class="pos-option-empty">
+        ${query ? `No se encontraron medicamentos para "<strong>${escapeHtml(query)}</strong>"` : "Sin medicamentos disponibles en esta sucursal"}
+      </div>
+    `;
+    return;
+  }
+
+  const currentSelectedId = productSelect?.value || "";
+  const isConsolidated = currentActiveBranch === "all";
+
+  optionsContainer.innerHTML = items
+    .map((item) => {
+      const isSelected = item.id === currentSelectedId;
+      const isSus = currentSaleType === "sus";
+      const priceStr = isSus ? "Gratis (SUS)" : `Bs ${Number(item.sale_price).toFixed(2)}`;
+      const isLowStock = item.quantity <= 10;
+      const branchName = isConsolidated ? getBranchName(item.branch_id, currentBranchesList) : "";
+
+      return `
+        <div class="pos-option-item ${isSelected ? "selected" : ""}" data-id="${item.id}" role="option" aria-selected="${isSelected}">
+          <div class="pos-option-main">
+            <span class="pos-option-name">${item.name}</span>
+            <div class="pos-option-sub">
+              <span>LOTE:</span>
+              <span class="pos-option-lot">${item.lot}</span>
+              ${branchName ? `<span class="pos-option-branch">${branchName}</span>` : ""}
+              <span>· Vence: ${item.expiry || "—"}</span>
+            </div>
+          </div>
+          <div class="pos-option-badges">
+            <span class="pos-stock-badge ${isLowStock ? "low" : ""}">Stock: ${item.quantity}</span>
+            <span class="pos-price-badge ${isSus ? "sus" : ""}">${priceStr}</span>
+          </div>
+        </div>
+      `;
+    })
+    .join("");
+
+  optionsContainer.querySelectorAll(".pos-option-item").forEach((el) => {
+    el.addEventListener("click", () => {
+      const id = el.getAttribute("data-id");
+      selectProductById(id);
+      closeCombobox();
+      document.getElementById("saleQuantity")?.focus();
+    });
+  });
+}
+
+/**
+ * Seleccionar un producto y sincronizar el trigger y preview
+ */
+function selectProductById(id) {
+  const productSelect = document.getElementById("saleProduct");
+  const comboboxLabel = document.getElementById("comboboxLabel");
+  if (!productSelect) return;
+
+  productSelect.value = id;
+  const selectedOpt = productSelect.selectedOptions[0];
+  if (selectedOpt && selectedOpt.value) {
+    const name = selectedOpt.getAttribute("data-name");
+    const lot = selectedOpt.getAttribute("data-lot");
+    const stock = selectedOpt.getAttribute("data-stock");
+    const isSus = currentSaleType === "sus";
+    const priceStr = isSus ? "SUS (Gratuito)" : `Bs ${Number(selectedOpt.getAttribute("data-price") || 0).toFixed(2)}`;
+    if (comboboxLabel) {
+      comboboxLabel.textContent = `${name} | Lote: ${lot} (Stock: ${stock} · ${priceStr})`;
+      comboboxLabel.classList.remove("placeholder");
+    }
+  } else {
+    if (comboboxLabel) {
+      comboboxLabel.textContent = currentAvailableStock.length === 0 ? "Sin medicamentos disponibles" : "Seleccionar medicamento...";
+      comboboxLabel.classList.add("placeholder");
+    }
+  }
+
+  updateProductPreview();
+}
+
+/**
+ * Abrir el desplegable y enfocar el campo de búsqueda
+ */
+function openCombobox() {
+  const combobox = document.getElementById("posCombobox");
+  const dropdown = document.getElementById("comboboxDropdown");
+  const trigger = document.getElementById("comboboxTrigger");
+  const searchInput = document.getElementById("comboboxSearchInput");
+
+  if (!combobox || !dropdown) return;
+  combobox.classList.add("open");
+  dropdown.classList.remove("hidden");
+  trigger?.setAttribute("aria-expanded", "true");
+
+  const currentQuery = searchInput?.value.trim().toLowerCase() || "";
+  renderComboboxOptions(currentQuery);
+
+  setTimeout(() => {
+    searchInput?.focus();
+    searchInput?.select();
+  }, 50);
+}
+
+/**
+ * Cerrar el desplegable
+ */
+function closeCombobox() {
+  const combobox = document.getElementById("posCombobox");
+  const dropdown = document.getElementById("comboboxDropdown");
+  const trigger = document.getElementById("comboboxTrigger");
+
+  if (!combobox || !dropdown) return;
+  combobox.classList.remove("open");
+  dropdown.classList.add("hidden");
+  trigger?.setAttribute("aria-expanded", "false");
 }
 
 /**
@@ -168,16 +337,76 @@ export function initPosEvents() {
       btn.classList.add("active");
       currentSaleType = btn.getAttribute("data-sale-type");
 
+      populateProductSelect();
       updateModeUI();
       updateProductPreview();
       updateCartUI();
     });
   });
 
-  // 2. Reactividad en el selector de producto y cantidad
+  // 2. Eventos del Combobox con Buscador Integrado en el Desplegable
+  const trigger = document.getElementById("comboboxTrigger");
+  const searchInput = document.getElementById("comboboxSearchInput");
+  const clearBtn = document.getElementById("comboboxClearBtn");
   const productSelect = document.getElementById("saleProduct");
   const qtyInput = document.getElementById("saleQuantity");
 
+  trigger?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const combobox = document.getElementById("posCombobox");
+    if (combobox?.classList.contains("open")) {
+      closeCombobox();
+    } else {
+      openCombobox();
+    }
+  });
+
+  trigger?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
+      e.preventDefault();
+      openCombobox();
+    }
+  });
+
+  searchInput?.addEventListener("input", (e) => {
+    const query = e.target.value.trim().toLowerCase();
+    renderComboboxOptions(query);
+  });
+
+  searchInput?.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      closeCombobox();
+      trigger?.focus();
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      const firstOpt = document.querySelector("#comboboxOptions .pos-option-item");
+      if (firstOpt) {
+        const id = firstOpt.getAttribute("data-id");
+        selectProductById(id);
+        closeCombobox();
+        qtyInput?.focus();
+        qtyInput?.select();
+      }
+    }
+  });
+
+  clearBtn?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (searchInput) {
+      searchInput.value = "";
+      renderComboboxOptions("");
+      searchInput.focus();
+    }
+  });
+
+  document.addEventListener("click", (e) => {
+    const combobox = document.getElementById("posCombobox");
+    if (combobox && !combobox.contains(e.target)) {
+      closeCombobox();
+    }
+  });
+
+  // 3. Reactividad en el selector de producto y cantidad
   productSelect?.addEventListener("change", updateProductPreview);
   qtyInput?.addEventListener("input", updateProductPreview);
 
@@ -215,11 +444,14 @@ export function initPosEvents() {
       return;
     }
 
+    const branchId = selectedOption.getAttribute("data-branch") || currentActiveBranch;
+
     if (existingInCart) {
       existingInCart.quantity += qty;
     } else {
       cart.push({
         inventoryId,
+        branchId,
         name,
         lot,
         quantity: qty,
@@ -246,12 +478,13 @@ export function initPosEvents() {
 
     const user = getCurrentUser();
     const branchSelect = document.getElementById("branchSelect");
-    const activeBranch =
+    const selectedBranchVal = branchSelect?.value || currentActiveBranch;
+    const movementBranch =
       user?.role !== "admin" && user?.branch_id !== "all"
         ? user.branch_id
-        : branchSelect?.value === "all"
-        ? "san-carlos"
-        : branchSelect?.value || "san-carlos";
+        : selectedBranchVal === "all"
+        ? (cart[0]?.branchId || "san-carlos")
+        : selectedBranchVal;
 
     let patientName = "";
     let susCode = "";
@@ -276,7 +509,7 @@ export function initPosEvents() {
       `;
 
       const movement = await processSale({
-        branchId: activeBranch,
+        branchId: movementBranch,
         type: currentSaleType,
         items: cart,
         patientName,
@@ -286,12 +519,15 @@ export function initPosEvents() {
 
       // Limpiar formulario y orden
       cart = [];
+      const searchInput = document.getElementById("comboboxSearchInput");
+      if (searchInput) searchInput.value = "";
+      closeCombobox();
       if (document.getElementById("susPatientName")) document.getElementById("susPatientName").value = "";
       if (document.getElementById("susCode")) document.getElementById("susCode").value = "";
       if (document.getElementById("saleNotes")) document.getElementById("saleNotes").value = "";
 
       updateCartUI();
-      await renderPosModule(activeBranch);
+      await renderPosModule(selectedBranchVal);
 
       // Mostrar Comprobante Oficial Imprimible
       showReceiptModal(movement);

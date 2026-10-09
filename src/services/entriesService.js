@@ -7,40 +7,66 @@ import { getCurrentUser } from "./authService.js";
 import { showToast } from "./toastService.js";
 import { getBranchCode } from "./branchesService.js";
 import { enqueueOfflineAction, notifyDataChanged } from "./syncService.js";
+import { invalidateInventoryCache } from "./inventoryService.js";
 
 const ENTRIES_CACHE_KEY = "farmacias_entries_cache";
 const INVENTORY_CACHE_KEY = "farmacias_inventory_cache";
+let entriesCache = null;
+let lastEntriesFetchTime = 0;
+const CACHE_TTL_MS = 60000; // 60 segundos de caché en memoria
 
-export async function getEntries(branchId = "all") {
-  try {
-    let endpoint = "inventory_entries?select=*&order=timestamp.desc";
+export function invalidateEntriesCache() {
+  entriesCache = null;
+  lastEntriesFetchTime = 0;
+}
+
+export async function getEntries(branchId = "all", forceRefresh = false) {
+  const now = Date.now();
+
+  // 1. Respuesta instantánea en memoria si la caché está vigente
+  if (entriesCache && !forceRefresh && (now - lastEntriesFetchTime < CACHE_TTL_MS)) {
     if (branchId && branchId !== "all") {
-      endpoint += `&branch_id=eq.${encodeURIComponent(branchId)}`;
+      return entriesCache.filter((x) => x.branch_id === branchId);
     }
-    const data = await supabaseQuery(endpoint);
+    return entriesCache;
+  }
+
+  // 2. Consulta remota de todos los ingresos a Supabase
+  try {
+    const data = await supabaseQuery("inventory_entries?select=*&order=timestamp.desc");
     if (data && data.length > 0) {
-      if (branchId === "all") {
-        try {
-          localStorage.setItem(ENTRIES_CACHE_KEY, JSON.stringify(data));
-        } catch (_) {}
+      entriesCache = data;
+      lastEntriesFetchTime = now;
+      try {
+        localStorage.setItem(ENTRIES_CACHE_KEY, JSON.stringify(data));
+      } catch (_) {}
+
+      if (branchId && branchId !== "all") {
+        return entriesCache.filter((x) => x.branch_id === branchId);
       }
-      return data;
+      return entriesCache;
     }
   } catch (err) {
     console.warn("Fallo al obtener ingresos desde Supabase, usando respaldo local:", err);
   }
 
-  // Respaldo desde localStorage
-  try {
-    const raw = localStorage.getItem(ENTRIES_CACHE_KEY);
-    if (raw) {
-      const list = JSON.parse(raw);
-      if (branchId !== "all") {
-        return list.filter((x) => x.branch_id === branchId);
+  // 3. Respaldo desde localStorage si falla la red
+  if (!entriesCache) {
+    try {
+      const raw = localStorage.getItem(ENTRIES_CACHE_KEY);
+      if (raw) {
+        entriesCache = JSON.parse(raw);
+        lastEntriesFetchTime = now;
       }
-      return list;
+    } catch (_) {}
+  }
+
+  if (entriesCache) {
+    if (branchId && branchId !== "all") {
+      return entriesCache.filter((x) => x.branch_id === branchId);
     }
-  } catch (_) {}
+    return entriesCache;
+  }
 
   return [];
 }
@@ -194,6 +220,12 @@ export async function createEntry({
     const cachedEntries = JSON.parse(localStorage.getItem(ENTRIES_CACHE_KEY) || "[]");
     cachedEntries.unshift(entryRecord);
     localStorage.setItem(ENTRIES_CACHE_KEY, JSON.stringify(cachedEntries));
+
+    if (entriesCache) {
+      entriesCache.unshift(entryRecord);
+    }
+    invalidateInventoryCache();
+    invalidateEntriesCache();
   } catch (_) {}
 
   try {

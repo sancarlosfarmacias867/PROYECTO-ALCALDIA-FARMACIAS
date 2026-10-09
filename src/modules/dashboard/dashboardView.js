@@ -15,9 +15,11 @@ export async function renderDashboardModule(selectedBranchId = "all") {
   const dashboardSubtitle = document.getElementById("dashboardSubtitle");
 
   const user = getCurrentUser();
-  const branches = await getBranches();
-  const inventory = await getInventory(selectedBranchId, true);
-  const movements = await getMovements(selectedBranchId);
+  const [branches, inventory, movements] = await Promise.all([
+    getBranches(),
+    getInventory(selectedBranchId),
+    getMovements(selectedBranchId)
+  ]);
 
   if (greetingName && user) {
     greetingName.textContent = user.name.split(" ")[0];
