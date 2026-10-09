@@ -6,6 +6,7 @@ import { getUsers, createUser, updateUser, toggleUserActive, deleteUser } from "
 import { getBranches, getBranchName } from "../../services/branchesService.js";
 import { getRoleLabel, getCurrentUser } from "../../services/authService.js";
 import { showToast } from "../../services/toastService.js";
+import { showSystemConfirm } from "../../services/dialogService.js";
 
 let cachedBranches = [];
 let cachedUsers = [];
@@ -158,7 +159,17 @@ export async function renderUsersModule() {
       btn.addEventListener("click", async () => {
         const id = btn.getAttribute("data-id");
         const name = btn.getAttribute("data-name");
-        if (confirm(`¿Confirma eliminar definitivamente la cuenta de ${name}?`)) {
+        const confirmed = await showSystemConfirm({
+          eyebrow: "CONTROL DE ACCESOS",
+          title: "¿Eliminar este funcionario?",
+          message: `${name} perderá definitivamente el acceso al sistema municipal.`,
+          detail: "Esta acción elimina su cuenta, pero no altera los registros históricos realizados por el funcionario.",
+          confirmLabel: "Eliminar funcionario",
+          cancelLabel: "Conservar cuenta",
+          variant: "danger",
+          icon: "i-users"
+        });
+        if (confirmed) {
           try {
             await deleteUser(id);
             await renderUsersModule();

@@ -7,7 +7,7 @@
     "build": "node scripts/build.mjs",
     "start": "node server.js",
     "dev": "node server.js",
-    "check": "node --check src/js/app.js && node --check src/js/data.js && node --check src/services/salesService.js && node --check src/services/entriesService.js && node --check src/services/syncService.js && node --check src/utils/dateTime.js",
+    "check": "node --check src/js/app.js && node --check src/js/data.js && node --check src/modules/branches/branchesView.js && node --check src/services/branchesService.js && node --check src/services/dialogService.js && node --check src/services/salesService.js && node --check src/services/entriesService.js && node --check src/services/syncService.js && node --check src/utils/dateTime.js",
     "test": "node --test"
   }
 }

@@ -5,7 +5,7 @@
 
 import { checkSupabaseConnection } from "../config/supabase.js";
 import { initAuth, getCurrentUser, logout, isAdmin, isTechnician, isSeller, getRoleLabel } from "../services/authService.js";
-import { getBranches, getBranchName } from "../services/branchesService.js";
+import { getBranches, getBranchName, invalidateBranchesCache } from "../services/branchesService.js";
 import { showToast } from "../services/toastService.js";
 import { initSyncEngine } from "../services/syncService.js";
 
@@ -17,6 +17,7 @@ import { renderPosModule, initPosEvents } from "../modules/pos/posView.js";
 import { renderRestockModule, initRestockEvents } from "../modules/restock/restockView.js";
 import { renderUsersModule, initUserDialog } from "../modules/users/usersView.js";
 import { renderAnalyticsModule } from "../modules/analytics/analyticsView.js";
+import { renderBranchesModule, initBranchDialog } from "../modules/branches/branchesView.js";
 import { getInventory, getExpiryStatus, invalidateInventoryCache } from "../services/inventoryService.js";
 import { invalidateMovementsCache } from "../services/salesService.js";
 import { invalidateEntriesCache } from "../services/entriesService.js";
@@ -56,6 +57,7 @@ async function initApp() {
 
   // 5. Inicializar Eventos de Diálogos y Módulos
   initUserDialog();
+  initBranchDialog();
   initPriceDialog();
   initPosEvents();
   initRestockEvents();
@@ -104,9 +106,12 @@ async function populateBranchSelector() {
         .join("");
       branchSelect.value = selectedBranch;
     } else {
-      // En Dashboard, Inventario y Reportes se permite "Consolidado (Todas las 6)"
+      // En los módulos de consulta se permite una vista consolidada de toda la red.
+      if (selectedBranch !== "all" && !branches.some((branch) => branch.id === selectedBranch)) {
+        selectedBranch = "all";
+      }
       branchSelect.innerHTML = `
-        <option value="all">Consolidado (Todas las 6)</option>
+        <option value="all">Consolidado (Todas las ${branches.length})</option>
         ${branches.map((b) => `<option value="${b.id}">${b.name} (${b.code})</option>`).join("")}
       `;
       branchSelect.value = selectedBranch;
@@ -179,7 +184,7 @@ async function switchView(viewName) {
   // En Control y Reportes se usan filtros propios dedicados: ocultar selector superior
   const topbarContext = document.querySelector(".topbar .context");
   if (topbarContext) {
-    topbarContext.style.display = (viewName === "reports" || viewName === "users") ? "none" : "";
+    topbarContext.style.display = (viewName === "reports" || viewName === "users" || viewName === "branches") ? "none" : "";
   }
 
   // Actualizar clases de botones
@@ -225,6 +230,9 @@ async function loadActiveView() {
     case "users":
       await renderUsersModule();
       break;
+    case "branches":
+      await renderBranchesModule();
+      break;
   }
 }
 
@@ -260,7 +268,7 @@ function applyRoleVisibility() {
     }
   } else if (role === "admin") {
     // Si estaba en vista no válida, volver a dashboard
-    if (!["dashboard", "inventory", "sales", "entries", "reports", "users"].includes(currentView)) {
+    if (!["dashboard", "inventory", "sales", "entries", "reports", "branches", "users"].includes(currentView)) {
       switchView("dashboard");
     }
   }
@@ -333,7 +341,7 @@ function initGlobalEvents() {
 
   // Evento de sincronización y cambio de datos en tiempo real
   let reloadTimeout = null;
-  window.addEventListener("pharmacy-data-change", () => {
+  window.addEventListener("pharmacy-data-change", (event) => {
     const activeDialog = document.querySelector("dialog[open]");
     if (activeDialog) return;
 
@@ -343,6 +351,10 @@ function initGlobalEvents() {
       invalidateMovementsCache();
       invalidateEntriesCache();
       invalidateUsersCache();
+      if (event.detail?.entity === "branches" || event.detail?.entity === "all") {
+        invalidateBranchesCache();
+        await populateBranchSelector();
+      }
       const user = getCurrentUser();
       if (user) {
         await loadActiveView();

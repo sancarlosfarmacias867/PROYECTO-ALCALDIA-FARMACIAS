@@ -4,6 +4,7 @@
  */
 import { login, getCurrentUser, logout, getRoleLabel } from "../../services/authService.js";
 import { showToast } from "../../services/toastService.js";
+import { showSystemConfirm } from "../../services/dialogService.js";
 
 const LOCK_KEY = "farmacias_security_lockout_v1";
 let countdownInterval = null;
@@ -411,10 +412,18 @@ function ensureLogoutButton() {
       <span>Salir</span>
     `;
 
-    logoutBtn.addEventListener("click", () => {
-      if (confirm("¿Deseas cerrar tu sesión del sistema?")) {
-        logout();
-      }
+    logoutBtn.addEventListener("click", async () => {
+      const confirmed = await showSystemConfirm({
+        eyebrow: "SEGURIDAD DE LA SESIÓN",
+        title: "¿Cerrar sesión ahora?",
+        message: "Finalizará su acceso al sistema municipal en este dispositivo.",
+        detail: "Los registros guardados ya están sincronizados. Para volver a operar deberá ingresar nuevamente sus credenciales.",
+        confirmLabel: "Sí, cerrar sesión",
+        cancelLabel: "Continuar trabajando",
+        variant: "logout",
+        icon: "i-lock"
+      });
+      if (confirmed) logout();
     });
 
     actionsContainer.appendChild(logoutBtn);

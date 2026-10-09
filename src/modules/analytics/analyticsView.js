@@ -27,20 +27,19 @@ export async function renderAnalyticsModule(selectedBranchId = "all") {
   const clearFiltersBtn = document.getElementById("clearReportFilters");
 
   const [branches, movements, entries] = await Promise.all([
-    getBranches(),
+    getBranches(false, true),
     getMovements(),
     getEntries()
   ]);
 
-  // Inicializar selector de sucursales si aún no tiene opciones
-  if (reportBranch && reportBranch.options.length <= 1) {
+  // Reconstruir siempre: las nuevas sucursales aparecen sin tener que recargar la página.
+  if (reportBranch) {
+    const previousBranch = reportBranch.value || selectedBranchId || "all";
     reportBranch.innerHTML = `
       <option value="all">Todas las sucursales (Consolidado)</option>
-      ${branches.map((b) => `<option value="${b.id}">${b.name} (${b.code})</option>`).join("")}
+      ${branches.map((b) => `<option value="${b.id}">${b.name} (${b.code})${b.active === false ? " · Inactiva" : ""}</option>`).join("")}
     `;
-    if (selectedBranchId && selectedBranchId !== "all") {
-      reportBranch.value = selectedBranchId;
-    }
+    reportBranch.value = branches.some((branch) => branch.id === previousBranch) ? previousBranch : "all";
   }
 
   if (salesAuditCount) salesAuditCount.textContent = `${movements.length}`;

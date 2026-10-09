@@ -199,6 +199,7 @@ let lastKnownMovementCount = null;
 let lastKnownInventoryCount = null;
 let lastKnownEntry = null;
 let lastKnownUsers = null;
+let lastKnownBranches = null;
 
 export async function checkRemoteChanges() {
   if (!isOnline) return;
@@ -219,6 +220,10 @@ export async function checkRemoteChanges() {
     const currentEntry = entriesData?.length > 0 ? `${entriesData[0].id}-${entriesData[0].timestamp}` : null;
     const usersData = await supabaseQuery("app_users?select=id,active,last_access&order=id.asc");
     const currentUsers = JSON.stringify((usersData || []).map((user) => [user.id, user.active, user.last_access]));
+    const branchesData = await supabaseQuery("branches?select=id,name,code,address,phone,active&order=id.asc");
+    const currentBranches = JSON.stringify((branchesData || []).map((branch) => [
+      branch.id, branch.name, branch.code, branch.address, branch.phone, branch.active
+    ]));
 
     if (lastKnownMovementCount !== null && currentMovCount !== lastKnownMovementCount) {
       // Hubo nuevo movimiento registrado en la nube por otro usuario
@@ -238,10 +243,15 @@ export async function checkRemoteChanges() {
       notifyDataChanged("users", false);
     }
 
+    if (lastKnownBranches !== null && currentBranches !== lastKnownBranches) {
+      notifyDataChanged("branches", false);
+    }
+
     lastKnownMovementCount = currentMovCount;
     lastKnownInventoryCount = currentInvSample;
     lastKnownEntry = currentEntry;
     lastKnownUsers = currentUsers;
+    lastKnownBranches = currentBranches;
   } catch (_) {
     // El navegador puede seguir diciendo "online" aunque Supabase no sea alcanzable.
     // Marcar el modo local permite avisar al usuario y activa el sondeo de reconexión.

@@ -25,7 +25,7 @@ export async function renderInventoryModule(selectedBranchId = "all") {
   
   if (inventorySubtitle) {
     inventorySubtitle.textContent = activeBranch === "all" 
-      ? "Existencias consolidadas de las seis farmacias municipales de San Carlos."
+      ? `Existencias consolidadas de las ${branches.length} farmacias municipales de San Carlos.`
       : `Inventario y lotes vigentes en sucursal ${getBranchName(activeBranch, branches)}.`;
   }
 

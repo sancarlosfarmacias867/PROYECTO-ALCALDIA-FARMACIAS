@@ -27,7 +27,7 @@ export async function renderDashboardModule(selectedBranchId = "all") {
 
   if (dashboardSubtitle) {
     dashboardSubtitle.textContent = selectedBranchId === "all"
-      ? "Este es el movimiento consolidado de las seis farmacias municipales de San Carlos."
+      ? `Este es el movimiento consolidado de las ${branches.length} farmacias municipales de San Carlos.`
       : `Panel de control y operaciones de la sucursal ${getBranchName(selectedBranchId, branches)}.`;
   }
 

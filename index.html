@@ -151,6 +151,7 @@
           <button class="nav-item" data-view="sales" data-roles="admin,vendedor"><svg><use href="#i-cart"/></svg><span>Ventas y SUS</span></button>
           <button class="nav-item" data-view="entries" data-roles="admin,tecnico"><svg><use href="#i-plus"/></svg><span>Ingresos</span></button>
           <button class="nav-item" data-view="reports" data-roles="admin"><svg><use href="#i-chart"/></svg><span>Control y reportes</span></button>
+          <button class="nav-item" data-view="branches" data-roles="admin"><svg><use href="#i-store"/></svg><span>Sucursales</span></button>
           <button class="nav-item" data-view="users" data-roles="admin"><svg><use href="#i-users"/></svg><span>Usuarios y roles</span></button>
         </nav>
         <div class="sidebar-foot">
@@ -175,7 +176,7 @@
         <div class="content">
           <section class="view active" id="view-dashboard">
             <div class="page-heading">
-              <div><span class="eyebrow">OPERACIÓN MUNICIPAL</span><h1>Buenos días, <span id="greetingName">María</span></h1><p id="dashboardSubtitle">Este es el movimiento consolidado de las seis farmacias.</p></div>
+              <div><span class="eyebrow">OPERACIÓN MUNICIPAL</span><h1>Buenos días, <span id="greetingName">María</span></h1><p id="dashboardSubtitle">Este es el movimiento consolidado de la red municipal.</p></div>
               <button class="button secondary" data-go="reports" data-roles="admin"><svg><use href="#i-chart"/></svg>Ver reporte mensual</button>
             </div>
             <div class="metric-grid" id="metricGrid"></div>
@@ -867,6 +868,26 @@
             <div class="role-summary" id="roleSummary"></div>
             <article class="panel table-panel"><div class="toolbar"><label class="search"><svg><use href="#i-search"/></svg><input id="userSearch" type="search" placeholder="Buscar usuario" /></label><span class="result-count" id="userCount"></span></div><div class="table-wrap"><table><thead><tr><th>Usuario</th><th>Rol</th><th>Sucursal asignada</th><th>Estado</th><th>Último acceso</th><th>Acciones</th></tr></thead><tbody id="usersTable"></tbody></table></div></article>
           </section>
+
+          <section class="view" id="view-branches">
+            <div class="branches-command-hero">
+              <div class="branch-hero-glow branch-hero-glow-one"></div>
+              <div class="branch-hero-glow branch-hero-glow-two"></div>
+              <div class="page-heading">
+                <div><span class="eyebrow">CENTRO DE CONTROL · RED MUNICIPAL</span><h1>Farmacias y sucursales</h1><p>Administra todos los puntos de atención conectados al inventario, ventas, ingresos y reportes.</p></div>
+                <button class="button primary" id="newBranchButton"><svg><use href="#i-plus"/></svg>Nueva sucursal</button>
+              </div>
+              <div class="branches-live-strip"><span><i></i>Red sincronizada en tiempo real</span><span>Gestión centralizada</span><span>Trazabilidad protegida</span></div>
+            </div>
+            <div class="branches-admin-summary" id="branchesAdminSummary"></div>
+            <article class="panel branches-admin-panel">
+              <div class="branches-admin-toolbar">
+                <div><h2>Directorio institucional</h2><p>Información operativa y estado de cada farmacia municipal.</p></div>
+                <span class="result-count" id="branchesAdminCount"></span>
+              </div>
+              <div class="branches-admin-grid" id="branchesAdminGrid"></div>
+            </article>
+          </section>
         </div>
       </main>
     </div>
@@ -886,6 +907,28 @@
         <div id="drawerAlerts"></div>
       </div>
     </aside>
+
+    <dialog id="systemConfirmDialog" class="system-confirm-dialog" aria-labelledby="systemConfirmTitle" aria-describedby="systemConfirmMessage">
+      <div class="system-confirm-shell">
+        <div class="system-confirm-grid"></div>
+        <button type="button" class="system-confirm-close" data-close-system-confirm aria-label="Cerrar confirmación"><svg><use href="#i-close"/></svg></button>
+        <div class="system-confirm-visual">
+          <div class="system-confirm-orbit orbit-one"></div>
+          <div class="system-confirm-orbit orbit-two"></div>
+          <svg><use id="systemConfirmIconUse" href="#i-shield"/></svg>
+        </div>
+        <div class="system-confirm-copy">
+          <span class="system-confirm-eyebrow" id="systemConfirmEyebrow">CONFIRMACIÓN DEL SISTEMA</span>
+          <h2 id="systemConfirmTitle">¿Desea continuar?</h2>
+          <p id="systemConfirmMessage">Confirme la acción para continuar.</p>
+          <div class="system-confirm-detail" id="systemConfirmDetail" hidden></div>
+        </div>
+        <div class="system-confirm-actions">
+          <button type="button" class="system-confirm-cancel" id="systemConfirmCancel">Cancelar</button>
+          <button type="button" class="system-confirm-accept" id="systemConfirmAccept"><svg><use href="#i-check"/></svg><span id="systemConfirmAcceptText">Confirmar</span></button>
+        </div>
+      </div>
+    </dialog>
 
     <dialog id="userDialog" class="official-modal">
       <form method="dialog" id="userForm" class="official-modal-form">
@@ -1020,6 +1063,66 @@
           </button>
         </div>
       </form>
+    </dialog>
+
+    <dialog id="branchDialog" class="official-modal">
+      <form method="dialog" id="branchForm" class="official-modal-form">
+        <div class="official-modal-header">
+          <div class="official-modal-title-wrap">
+            <div class="official-modal-icon"><svg><use href="#i-store"/></svg></div>
+            <div>
+              <span class="official-modal-badge">ADMINISTRACIÓN DE LA RED MUNICIPAL</span>
+              <h2 id="branchDialogTitle">Registrar nueva farmacia</h2>
+              <p class="official-modal-subtitle" id="branchDialogSubtitle">La nueva farmacia quedará integrada a todos los módulos del sistema.</p>
+            </div>
+          </div>
+          <button type="button" class="official-modal-close" data-close-branch aria-label="Cerrar ventana"><svg><use href="#i-close"/></svg></button>
+        </div>
+        <div class="official-modal-body">
+          <input type="hidden" name="branchId" />
+          <div class="modal-form-grid">
+            <div class="modal-form-group">
+              <label for="branchFormName"><span>Nombre de la farmacia</span><span class="required-indicator">*</span></label>
+              <div class="official-input-wrap"><svg class="official-input-icon"><use href="#i-store"/></svg><input class="official-input" id="branchFormName" name="name" required minlength="3" maxlength="80" placeholder="Ej: Farmacia Municipal Norte" /></div>
+            </div>
+            <div class="modal-form-group">
+              <label for="branchFormCode"><span>Código corto</span><span class="required-indicator">*</span></label>
+              <div class="official-input-wrap"><svg class="official-input-icon"><use href="#i-key"/></svg><input class="official-input" id="branchFormCode" name="code" required minlength="2" maxlength="5" placeholder="Ej: FN" autocomplete="off" /></div>
+              <small class="field-hint">Entre 2 y 5 letras o números; debe ser único.</small>
+            </div>
+            <div class="modal-form-group full-width">
+              <label for="branchFormAddress"><span>Dirección institucional</span><span class="required-indicator">*</span></label>
+              <div class="official-input-wrap"><svg class="official-input-icon"><use href="#i-store"/></svg><input class="official-input" id="branchFormAddress" name="address" required minlength="5" maxlength="160" placeholder="Avenida, calle, número o referencia" /></div>
+            </div>
+            <div class="modal-form-group full-width">
+              <label for="branchFormPhone"><span>Teléfono de contacto</span></label>
+              <div class="official-input-wrap"><svg class="official-input-icon"><use href="#i-users"/></svg><input class="official-input" id="branchFormPhone" name="phone" type="tel" maxlength="30" placeholder="Ej: +591 3 934-2107" /></div>
+            </div>
+          </div>
+          <div class="modal-security-note"><svg><use href="#i-check"/></svg><span><strong>Integración automática:</strong> al guardar, la sucursal estará disponible para asignar personal, registrar lotes, vender, dispensar SUS y emitir reportes.</span></div>
+        </div>
+        <div class="official-modal-footer">
+          <button type="button" class="btn-official-cancel" data-close-branch>Cancelar</button>
+          <button type="submit" class="btn-official-submit-modal" id="branchSubmitBtn"><svg><use href="#i-check"/></svg><span id="branchSubmitText">Crear sucursal</span></button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="branchDeleteDialog" class="official-modal branch-delete-dialog">
+      <div class="official-modal-form">
+        <div class="delete-branch-visual"><div class="delete-branch-orbit"></div><svg><use href="#i-store"/></svg></div>
+        <div class="delete-branch-content">
+          <span class="official-modal-badge danger-badge">ACCIÓN DEFINITIVA</span>
+          <h2>¿Eliminar esta sucursal?</h2>
+          <p>Se verificará que no tenga inventario, movimientos, ingresos ni funcionarios asociados.</p>
+          <div class="delete-branch-target"><span id="branchDeleteCode">--</span><strong id="branchDeleteName">Sucursal</strong></div>
+          <div class="delete-protection-note"><svg><use href="#i-shield"/></svg><span>Si existe información histórica, el sistema bloqueará el borrado. En ese caso puede usar <strong>Desactivar</strong>.</span></div>
+        </div>
+        <div class="official-modal-footer delete-branch-footer">
+          <button type="button" class="btn-official-cancel" data-close-branch-delete>Conservar sucursal</button>
+          <button type="button" class="btn-danger-confirm" id="confirmBranchDelete"><svg><use href="#i-close"/></svg><span>Eliminar definitivamente</span></button>
+        </div>
+      </div>
     </dialog>
 
     <dialog id="priceDialog" class="official-modal">
