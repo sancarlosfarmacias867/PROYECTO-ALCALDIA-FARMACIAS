@@ -192,8 +192,9 @@ async function switchView(viewName) {
     viewEl.classList.toggle("active", viewEl.id === `view-${viewName}`);
   });
 
-  // Cerrar sidebar en móvil si está abierto
+  // Cerrar sidebar y backdrop en móvil si está abierto
   document.getElementById("sidebar")?.classList.remove("open");
+  document.getElementById("drawerBackdrop")?.classList.remove("open");
 
   // Actualizar el selector de sucursal según las reglas del módulo activo (excluyendo consolidado en ventas e ingresos)
   await populateBranchSelector();

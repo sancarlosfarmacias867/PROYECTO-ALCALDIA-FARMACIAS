@@ -4796,4 +4796,732 @@ dialog[open] {
   max-width: 280px;
 }
 
+/* =========================================================
+   SISTEMA DE DISEÑO RESPONSIVO AVANZADO PARA SMARTPHONES & TABLETS
+   Optimización Integral Móvil sin alterar la Vista de Escritorio
+========================================================= */
+
+@media (max-width: 900px) {
+  html, body {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  .app-shell {
+    display: block !important;
+    width: 100%;
+    min-width: 0;
+    overflow-x: hidden;
+  }
+
+  /* Menú lateral retráctil para móviles */
+  .sidebar {
+    position: fixed !important;
+    inset: 0 auto 0 0 !important;
+    width: 280px !important;
+    max-width: 84vw !important;
+    height: 100vh !important;
+    z-index: 1050 !important;
+    transform: translateX(-105%) !important;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    box-shadow: 0 0 35px rgba(0, 0, 0, 0.28) !important;
+    overflow-y: auto;
+  }
+
+  .sidebar.open {
+    transform: translateX(0) !important;
+  }
+
+  .main {
+    grid-column: auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: hidden;
+  }
+
+  .menu-button {
+    display: grid !important;
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 10px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  .sale-layout {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 18px !important;
+    width: 100% !important;
+  }
+
+  .sale-summary {
+    position: static !important;
+    width: 100% !important;
+  }
+
+  .role-summary {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .entries-kpi-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Cabecera / Topbar Móvil Compacta */
+  .topbar {
+    height: 60px !important;
+    margin: 8px 10px 0 !important;
+    padding: 0 10px !important;
+    border-radius: 12px !important;
+    gap: 8px !important;
+    top: 6px !important;
+    position: sticky !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+  }
+
+  .context {
+    flex: 1 !important;
+    min-width: 0 !important;
+    gap: 0 !important;
+  }
+
+  .context label {
+    display: none !important;
+  }
+
+  #branchSelect {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: 38px !important;
+    padding: 6px 10px !important;
+    font-size: 0.8rem !important;
+    border-radius: 9px !important;
+    text-overflow: ellipsis !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
+  }
+
+  .topbar-actions {
+    margin-left: auto !important;
+    gap: 8px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .notification-button {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 10px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .profile {
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    gap: 0 !important;
+  }
+
+  .profile div {
+    display: none !important;
+  }
+
+  .profile > span {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 0.78rem !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Contenedor Principal de Vistas */
+  .content {
+    padding: 12px 10px 36px !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+  }
+
+  .view {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Encabezados de Página */
+  .page-heading {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .page-heading > div {
+    width: 100% !important;
+  }
+
+  .page-heading h1 {
+    font-size: 1.35rem !important;
+    line-height: 1.25 !important;
+  }
+
+  .page-heading p {
+    font-size: 0.78rem !important;
+    margin-top: 4px !important;
+  }
+
+  .page-heading button,
+  .page-heading .button {
+    width: 100% !important;
+    min-height: 46px !important;
+    justify-content: center !important;
+    font-size: 0.88rem !important;
+  }
+
+  .branch-pill {
+    align-self: flex-start !important;
+    padding: 6px 12px !important;
+    font-size: 0.75rem !important;
+  }
+
+  /* Tarjetas Métricas en Dashboard */
+  .metric-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .metric-card {
+    padding: 14px 16px !important;
+    border-radius: 14px !important;
+  }
+
+  .metric-value {
+    font-size: 1.55rem !important;
+    margin: 6px 0 2px !important;
+  }
+
+  .chart-panel, .alerts-panel, .branches-panel {
+    padding: 16px !important;
+    border-radius: 14px !important;
+  }
+
+  .branch-cards {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  /* Módulo de Inventario */
+  .toolbar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    padding: 12px !important;
+    border-radius: 14px 14px 0 0 !important;
+  }
+
+  .search {
+    min-width: 0 !important;
+    width: 100% !important;
+    height: 44px !important;
+  }
+
+  .toolbar select,
+  #expiryFilter {
+    width: 100% !important;
+    height: 44px !important;
+  }
+
+  .result-count {
+    font-size: 0.75rem !important;
+    align-self: flex-end !important;
+  }
+
+  .table-panel {
+    border-radius: 14px !important;
+    overflow: hidden !important;
+  }
+
+  .table-wrap {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    width: 100% !important;
+    display: block !important;
+  }
+
+  .table-wrap table {
+    min-width: 680px !important;
+  }
+
+  /* Módulo Punto de Venta (Ventas y SUS) */
+  .sale-builder {
+    border-radius: 14px !important;
+    width: 100% !important;
+  }
+
+  .type-switch {
+    margin: 12px 12px 10px !important;
+    padding: 4px !important;
+    gap: 6px !important;
+  }
+
+  .type-switch button {
+    padding: 8px 10px !important;
+    gap: 8px !important;
+  }
+
+  .type-btn-icon {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .type-btn-text span {
+    font-size: 0.82rem !important;
+  }
+
+  .type-btn-text small {
+    font-size: 0.68rem !important;
+  }
+
+  .sus-extra-fields {
+    margin: 0 12px 12px !important;
+    padding: 12px !important;
+    border-radius: 12px !important;
+  }
+
+  .sus-form-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .form-section {
+    padding: 14px 12px !important;
+  }
+
+  .form-section-header {
+    gap: 10px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .form-section-icon {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .sale-add-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+
+  .product-select-group {
+    width: 100% !important;
+  }
+
+  .pos-combobox-trigger {
+    min-height: 48px !important;
+    font-size: 0.85rem !important;
+    padding: 0 10px !important;
+    border-radius: 10px !important;
+  }
+
+  .pos-combobox-dropdown {
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    max-height: 260px !important;
+  }
+
+  .sale-add-grid > div:nth-child(2) {
+    width: 100% !important;
+  }
+
+  #saleQuantity {
+    width: 100% !important;
+    height: 46px !important;
+    font-size: 1rem !important;
+    text-align: center !important;
+    border-radius: 10px !important;
+  }
+
+  #btnAddSaleItem {
+    width: 100% !important;
+    min-height: 48px !important;
+    font-size: 0.92rem !important;
+    justify-content: center !important;
+    border-radius: 10px !important;
+  }
+
+  .product-preview-strip {
+    margin-top: 10px !important;
+    padding: 10px 12px !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    border-radius: 10px !important;
+  }
+
+  .cart-list {
+    padding: 10px 12px !important;
+    min-height: 120px !important;
+  }
+
+  .pos-cart-item {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    padding: 12px 14px !important;
+    border-radius: 12px !important;
+  }
+
+  .cart-item-actions {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    gap: 10px !important;
+    padding-top: 8px !important;
+    border-top: 1px dashed #e2e8f0 !important;
+  }
+
+  .cart-stepper {
+    height: 34px !important;
+  }
+
+  .btn-stepper {
+    width: 34px !important;
+    height: 34px !important;
+  }
+
+  .sale-summary {
+    padding: 16px !important;
+    border-radius: 14px !important;
+    width: 100% !important;
+  }
+
+  .pos-total-card {
+    padding: 14px 16px !important;
+    border-radius: 12px !important;
+  }
+
+  .total-amount {
+    font-size: 1.85rem !important;
+  }
+
+  .payment-options {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+
+  .pay-option {
+    padding: 10px !important;
+    font-size: 0.8rem !important;
+    border-radius: 10px !important;
+  }
+
+  #btnCompleteSale {
+    min-height: 52px !important;
+    font-size: 1rem !important;
+    width: 100% !important;
+    justify-content: center !important;
+    border-radius: 12px !important;
+  }
+
+  /* Módulo de Ingresos y Reabastecimiento */
+  .entries-kpi-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .entry-kpi-card {
+    padding: 12px 14px !important;
+    border-radius: 12px !important;
+  }
+
+  .entry-kpi-icon {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 10px !important;
+  }
+
+  .entry-kpi-val {
+    font-size: 1.25rem !important;
+  }
+
+  .entry-main-card {
+    border-radius: 14px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .entry-card-header {
+    padding: 14px 16px !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+
+  .entry-form-body {
+    padding: 14px 16px !important;
+  }
+
+  .entry-grid-section-1,
+  .entry-grid-3,
+  .entry-grid-2,
+  .entry-grid-4,
+  .entry-grid-pricing {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .entry-input {
+    height: 46px !important;
+    font-size: 0.9rem !important;
+    border-radius: 10px !important;
+  }
+
+  .entry-form-footer {
+    flex-direction: column-reverse !important;
+    padding: 14px 16px !important;
+    gap: 10px !important;
+  }
+
+  .btn-entry-reset, .btn-entry-submit {
+    width: 100% !important;
+    min-height: 48px !important;
+    justify-content: center !important;
+    border-radius: 12px !important;
+  }
+
+  .history-header-actions {
+    width: 100% !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+
+  .history-search-input {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 44px !important;
+  }
+
+  .entry-history-table-wrap {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    width: 100% !important;
+    display: block !important;
+  }
+
+  .entry-history-table {
+    min-width: 650px !important;
+  }
+
+  /* Módulo de Control y Reportes */
+  .report-filters-card {
+    padding: 14px 16px !important;
+    border-radius: 14px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .filters-card-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .report-metrics {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .report-charts-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .branch-bar-chart {
+    padding: 12px !important;
+  }
+
+  .branch-bar-row {
+    grid-template-columns: 1fr !important;
+    gap: 6px !important;
+    padding: 10px 0 !important;
+  }
+
+  .report-table-card {
+    border-radius: 14px !important;
+  }
+
+  .report-table-toolbar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    padding: 12px !important;
+  }
+
+  .report-table-wrap {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    width: 100% !important;
+    display: block !important;
+  }
+
+  #reportTable {
+    min-width: 650px !important;
+  }
+
+  /* Módulo de Usuarios y Roles */
+  .role-summary {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .role-card {
+    padding: 14px 16px !important;
+    border-radius: 12px !important;
+  }
+
+  .user-toolbar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    padding: 12px !important;
+  }
+
+  .user-search {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  #btnNewUser {
+    width: 100% !important;
+    min-height: 46px !important;
+    justify-content: center !important;
+    border-radius: 10px !important;
+  }
+
+  /* Modales Oficiales en Móvil */
+  dialog,
+  dialog.official-modal {
+    width: calc(100% - 16px) !important;
+    max-width: calc(100% - 16px) !important;
+    margin: auto !important;
+    border-radius: 16px !important;
+    max-height: 90vh !important;
+  }
+
+  .official-modal-header {
+    padding: 14px 16px !important;
+  }
+
+  .official-modal-title-wrap {
+    gap: 10px !important;
+  }
+
+  .official-modal-icon {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 10px !important;
+  }
+
+  .official-modal-header h2 {
+    font-size: 1.05rem !important;
+  }
+
+  .official-modal-body {
+    padding: 14px 16px !important;
+    max-height: 65vh !important;
+    overflow-y: auto !important;
+  }
+
+  .official-modal-footer {
+    padding: 12px 16px !important;
+    flex-direction: column-reverse !important;
+    gap: 8px !important;
+  }
+
+  .official-modal-footer button,
+  .btn-official-cancel,
+  .btn-official-submit-modal {
+    width: 100% !important;
+    min-height: 46px !important;
+    justify-content: center !important;
+    border-radius: 10px !important;
+  }
+
+  .form-row-2,
+  .price-calc-grid {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  /* Panel Deslizante de Alertas */
+  .alert-drawer {
+    width: 100vw !important;
+    max-width: 100vw !important;
+  }
+
+  .alert-drawer .drawer-heading {
+    padding: 14px 16px !important;
+  }
+
+  .alert-drawer .drawer-body {
+    padding: 12px !important;
+  }
+
+  .drawer-alert-card {
+    padding: 12px 14px !important;
+    border-radius: 12px !important;
+  }
+
+  /* Pantalla de Login en Móvil */
+  .login-overlay {
+    padding: 12px !important;
+  }
+
+  .login-card-official {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 24px 18px 20px !important;
+    border-radius: 18px !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .page-heading h1 {
+    font-size: 1.25rem !important;
+  }
+
+  .total-amount {
+    font-size: 1.65rem !important;
+  }
+
+  .type-switch {
+    grid-template-columns: 1fr !important;
+  }
+
+  .payment-options {
+    grid-template-columns: 1fr !important;
+  }
+
+  .product-preview-strip {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+
 
