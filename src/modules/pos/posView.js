@@ -7,6 +7,7 @@ import { processSale } from "../../services/salesService.js";
 import { getCurrentUser, isAdmin } from "../../services/authService.js";
 import { getBranchName, getBranches } from "../../services/branchesService.js";
 import { showToast } from "../../services/toastService.js";
+import { formatBusinessDateTime } from "../../utils/dateTime.js";
 
 let currentSaleType = "normal";
 let cart = [];
@@ -705,7 +706,7 @@ function showReceiptModal(movement) {
 
       <div class="receipt-info-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.82rem; margin-bottom: 18px; background: #f8fafc; padding: 12px 16px; border-radius: 12px; border: 1px solid #e2e8f0;">
         <div><strong>N.º Movimiento:</strong> <span style="font-family: monospace;">${movement.id}</span></div>
-        <div><strong>Fecha / Hora:</strong> ${new Date(movement.timestamp).toLocaleString("es-BO")}</div>
+        <div><strong>Fecha / Hora:</strong> ${formatBusinessDateTime(movement.timestamp)}</div>
         <div><strong>Sucursal:</strong> ${movement.branch_id}</div>
         <div><strong>Dispensado por:</strong> ${movement.responsible}</div>
         ${isSus ? `<div><strong>Beneficiario:</strong> ${movement.patient_name || "No especificado"}</div>` : ""}

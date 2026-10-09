@@ -7,6 +7,7 @@
     "build": "echo 'Compilacion estatica lista'",
     "start": "node server.js",
     "dev": "node server.js",
-    "check": "node --check src/js/app.js"
+    "check": "node --check src/js/app.js && node --check src/js/data.js && node --check src/services/salesService.js && node --check src/services/entriesService.js && node --check src/services/syncService.js && node --check src/utils/dateTime.js",
+    "test": "node --test"
   }
 }

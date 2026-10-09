@@ -7,6 +7,7 @@ import { getEntries } from "../../services/entriesService.js";
 import { getBranches, getBranchName } from "../../services/branchesService.js";
 import { exportToCSV } from "../../services/auditService.js";
 import { showToast } from "../../services/toastService.js";
+import { formatBusinessDateTime, getBusinessDate } from "../../utils/dateTime.js";
 
 let currentAuditTab = "sales";
 
@@ -232,7 +233,7 @@ export async function renderAnalyticsModule(selectedBranchId = "all") {
               return `
                 <tr>
                   <td data-label="ID"><code>${m.id}</code></td>
-                  <td data-label="Fecha y hora"><small>${new Date(m.timestamp || m.date).toLocaleString("es-BO")}</small></td>
+                  <td data-label="Fecha y hora"><small>${formatBusinessDateTime(m.timestamp || m.date)}</small></td>
                   <td data-label="Sucursal"><span class="branch-tag">${getBranchName(m.branch_id, branches)}</span></td>
                   <td data-label="Tipo"><span class="status-badge ${isSus ? "badge-sus" : "badge-sale"}">${isSus ? "SUS" : "Venta"}</span></td>
                   <td data-label="Beneficiario">${m.patient_name ? `<strong>${m.patient_name}</strong> <small class="text-muted">(${m.sus_code || "SUS"})</small>` : "Mostrador General"}</td>
@@ -348,7 +349,7 @@ export async function renderAnalyticsModule(selectedBranchId = "all") {
   const exportBtn = document.getElementById("exportReport");
   if (exportBtn) {
     exportBtn.onclick = () => {
-      const timestamp = new Date().toISOString().slice(0, 10);
+      const timestamp = getBusinessDate();
       if (currentAuditTab === "sales") {
         const rows = movements.map((m) => ({
           ID: m.id,

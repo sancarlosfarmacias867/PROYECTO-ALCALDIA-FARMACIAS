@@ -8,6 +8,7 @@ import { showToast } from "./toastService.js";
 import { getBranchCode } from "./branchesService.js";
 import { enqueueOfflineAction, notifyDataChanged } from "./syncService.js";
 import { invalidateInventoryCache } from "./inventoryService.js";
+import { getBusinessDate, getBusinessTimestamp } from "../utils/dateTime.js";
 
 const ENTRIES_CACHE_KEY = "farmacias_entries_cache";
 const INVENTORY_CACHE_KEY = "farmacias_inventory_cache";
@@ -98,7 +99,10 @@ export async function createEntry({
 
   const entryId = `ING-${Date.now().toString().slice(-6)}`;
   const now = new Date();
-  const timestamp = `${entryDate || now.toISOString().slice(0, 10)}T${now.toTimeString().slice(0, 8)}`;
+  const officialEntryDate = entryDate || getBusinessDate(now);
+  const timestamp = entryDate && entryDate !== getBusinessDate(now)
+    ? `${entryDate}T12:00:00-04:00`
+    : getBusinessTimestamp(now);
 
   // 1. Buscar si ya existe este lote en la sucursal (Supabase o Cache Local)
   let existing = null;
@@ -154,7 +158,7 @@ export async function createEntry({
         "RESTOCK_ADD_QTY",
         `inventory?id=eq.${encodeURIComponent(item.id)}`,
         "PATCH",
-        patchBody,
+        { ...patchBody, quantity_increment: qty },
         `RESTOCK-${entryId}`
       );
     }
@@ -172,7 +176,7 @@ export async function createEntry({
       sale_price: salePrice,
       margin: marginPct,
       price_configured: !isTechnician,
-      entry_date: entryDate || now.toISOString().slice(0, 10),
+      entry_date: officialEntryDate,
       expiry: expiry
     };
 
@@ -201,7 +205,7 @@ export async function createEntry({
   // 2. Registrar en la tabla de ingresos
   const entryRecord = {
     id: entryId,
-    date: entryDate || now.toISOString().slice(0, 10),
+    date: officialEntryDate,
     timestamp,
     branch_id: branchId,
     inventory_id: inventoryId,

@@ -7,6 +7,7 @@ import { getCurrentUser } from "./authService.js";
 import { showToast } from "./toastService.js";
 import { getExpiryStatus, getInventory, invalidateInventoryCache } from "./inventoryService.js";
 import { enqueueOfflineAction, notifyDataChanged } from "./syncService.js";
+import { getBusinessDate, getBusinessTimestamp } from "../utils/dateTime.js";
 
 const MOVEMENTS_CACHE_KEY = "farmacias_movements_cache";
 const INVENTORY_CACHE_KEY = "farmacias_inventory_cache";
@@ -134,8 +135,8 @@ export async function processSale({ branchId, type, items, patientName = "", sus
 
   const movementId = `MOV-${Date.now().toString().slice(-6)}`;
   const now = new Date();
-  const dateStr = now.toISOString().slice(0, 10);
-  const timestampStr = now.toISOString();
+  const dateStr = getBusinessDate(now);
+  const timestampStr = getBusinessTimestamp(now);
 
   const movementData = {
     id: movementId,
@@ -193,7 +194,16 @@ export async function processSale({ branchId, type, items, patientName = "", sus
           method: "PATCH",
           body: { quantity: newQty }
         });
-      } catch (_) {}
+      } catch (stockError) {
+        console.warn(`No se pudo descontar en nube el lote ${item.inventoryId}. Se reintentará automáticamente.`, stockError);
+        enqueueOfflineAction(
+          "DEDUCT_STOCK",
+          `inventory?id=eq.${encodeURIComponent(item.inventoryId)}`,
+          "PATCH",
+          { quantity_decrement: item.quantity },
+          `STOCK-${movementId}-${item.inventoryId}`
+        );
+      }
     }
 
     // 3.3 Auditoría

@@ -1,3 +1,5 @@
+import { getBusinessDate } from "../utils/dateTime.js";
+
 export const branches = [
   { id: "santa-fe", name: "Santa Fe", code: "SF" },
   { id: "buen-retiro", name: "Buen Retiro", code: "BR" },
@@ -8,14 +10,16 @@ export const branches = [
 ];
 
 const addDays = (days) => {
-  const d = new Date();
-  d.setDate(d.getDate() + days);
+  const [year, month, day] = getBusinessDate().split("-").map(Number);
+  const d = new Date(Date.UTC(year, month - 1, day + days));
   return d.toISOString().slice(0, 10);
 };
 
 const monthsAgo = (months, day = 12) => {
-  const d = new Date();
-  d.setMonth(d.getMonth() - months, day);
+  const [year, month, today] = getBusinessDate().split("-").map(Number);
+  const d = new Date(Date.UTC(year, month - 1 - months, day));
+  // Los datos de demostración jamás pueden aparecer en el futuro.
+  if (months === 0 && day > today) d.setUTCMonth(d.getUTCMonth() - 1);
   return d.toISOString().slice(0, 10);
 };
 
@@ -56,7 +60,7 @@ export const seedSales = Array.from({ length: 54 }, (_, i) => {
   return {
     id: `MOV-${1001 + i}`,
     date,
-    timestamp: `${date}T${String(8 + (i % 9)).padStart(2, "0")}:${String((i * 7) % 60).padStart(2, "0")}:00`,
+    timestamp: `${date}T${String(8 + (i % 9)).padStart(2, "0")}:${String((i * 7) % 60).padStart(2, "0")}:00-04:00`,
     branchId: branch.id,
     type,
     items,
@@ -79,7 +83,7 @@ export const seedSales = Array.from({ length: 54 }, (_, i) => {
 const historicalEntries = seedInventory.map((item, i) => ({
   id: `ING-${1001 + i}`,
   date: item.entryDate,
-  timestamp: `${item.entryDate}T${String(7 + (i % 10)).padStart(2, "0")}:${String((i * 11) % 60).padStart(2, "0")}:00`,
+  timestamp: `${item.entryDate}T${String(7 + (i % 10)).padStart(2, "0")}:${String((i * 11) % 60).padStart(2, "0")}:00-04:00`,
   branchId: item.branchId,
   inventoryId: item.id,
   name: item.name,
@@ -96,7 +100,7 @@ const recentEntries = branches.map((branch, i) => {
   return {
     id: `ING-REC-${1001 + i}`,
     date,
-    timestamp: `${date}T${String(8 + i).padStart(2, "0")}:${String(10 + i * 6).padStart(2, "0")}:00`,
+    timestamp: `${date}T${String(8 + i).padStart(2, "0")}:${String(10 + i * 6).padStart(2, "0")}:00-04:00`,
     branchId: branch.id,
     inventoryId: product.id,
     name: product.name,

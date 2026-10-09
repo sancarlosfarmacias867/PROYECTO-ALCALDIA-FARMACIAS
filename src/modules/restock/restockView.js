@@ -6,6 +6,7 @@ import { createEntry, getEntries } from "../../services/entriesService.js";
 import { getBranches, getBranchName } from "../../services/branchesService.js";
 import { getCurrentUser, isAdmin, isTechnician } from "../../services/authService.js";
 import { showToast } from "../../services/toastService.js";
+import { formatBusinessDateTime, getBusinessDate } from "../../utils/dateTime.js";
 import { getExpiryStatus } from "../../services/inventoryService.js";
 
 let cachedEntries = [];
@@ -81,7 +82,7 @@ export async function renderRestockModule(selectedBranchId = "all") {
   // 4. Establecer fecha de hoy por defecto si está vacía
   const entryDateInput = document.getElementById("entryDate");
   if (entryDateInput && !entryDateInput.value) {
-    entryDateInput.value = new Date().toISOString().slice(0, 10);
+    entryDateInput.value = getBusinessDate();
   }
 
   // 5. Adaptar permisos de rol (Margen para Admin, Nota para Técnico)
@@ -218,9 +219,7 @@ function renderEntriesTable() {
           ? "badge-warning"
           : "badge-success";
 
-      const formattedTime = item.timestamp
-        ? item.timestamp.replace("T", " ").slice(0, 16)
-        : item.date || "—";
+      const formattedTime = item.timestamp ? formatBusinessDateTime(item.timestamp) : item.date || "—";
 
       return `
         <tr>
@@ -380,7 +379,7 @@ export function initRestockEvents() {
   resetBtn?.addEventListener("click", () => {
     setTimeout(() => {
       const entryDateInput = document.getElementById("entryDate");
-      if (entryDateInput) entryDateInput.value = new Date().toISOString().slice(0, 10);
+      if (entryDateInput) entryDateInput.value = getBusinessDate();
       if (marginInput) marginInput.value = "30";
       updateLiveCalculations();
       updateExpiryFeedback();
@@ -442,7 +441,7 @@ export function initRestockEvents() {
         // Limpiar formulario manteniendo fecha de hoy
         form.reset();
         const entryDateInput = document.getElementById("entryDate");
-        if (entryDateInput) entryDateInput.value = new Date().toISOString().slice(0, 10);
+        if (entryDateInput) entryDateInput.value = getBusinessDate();
         if (marginInput) marginInput.value = "30";
         updateLiveCalculations();
         updateExpiryFeedback();
